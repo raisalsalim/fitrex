@@ -1,4 +1,4 @@
-// Curated database of exercises with posture guides, form cues & demonstration videos
+// Curated database of exercises with posture guides, form cues, photos & demonstration videos
 export const MUSCLE_GROUPS = [
   { id: 'chest', name: 'Chest', icon: 'Shield', color: '#38bdf8' },
   { id: 'back', name: 'Back', icon: 'Compass', color: '#10b981' },
@@ -52,7 +52,7 @@ export const DEFAULT_EXERCISES = [
     muscle: 'chest',
     secondaryMuscles: ['shoulders'],
     youtubeUrl: 'https://www.youtube.com/watch?v=taI4XduLpBe',
-    photoUrl: '',
+    photoUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&auto=format&fit=crop&q=80',
     cues: [
       'Slight forward lean with staggered stance for stability',
       'Maintain slight, fixed bend in elbows throughout movement',
@@ -67,7 +67,7 @@ export const DEFAULT_EXERCISES = [
     muscle: 'chest',
     secondaryMuscles: ['triceps', 'shoulders'],
     youtubeUrl: 'https://www.youtube.com/watch?v=2z8JmcrW-As',
-    photoUrl: '',
+    photoUrl: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=600&auto=format&fit=crop&q=80',
     cues: [
       'Lean torso slightly forward to bias chest over triceps',
       'Lower until elbows reach a 90-degree angle',
@@ -99,7 +99,7 @@ export const DEFAULT_EXERCISES = [
     muscle: 'back',
     secondaryMuscles: ['biceps'],
     youtubeUrl: 'https://www.youtube.com/watch?v=CAwf7n6Luuc',
-    photoUrl: '',
+    photoUrl: 'https://images.unsplash.com/photo-1598971639058-fab3c3109a00?w=600&auto=format&fit=crop&q=80',
     cues: [
       'Grip slightly wider than shoulder width',
       'Slight lean back (~10-15°), drive elbows down toward your back pockets',
@@ -114,7 +114,7 @@ export const DEFAULT_EXERCISES = [
     muscle: 'back',
     secondaryMuscles: ['biceps', 'shoulders'],
     youtubeUrl: 'https://www.youtube.com/watch?v=FWJR5Ve8gkQ',
-    photoUrl: '',
+    photoUrl: 'https://images.unsplash.com/photo-1605296867304-46d5465a13f1?w=600&auto=format&fit=crop&q=80',
     cues: [
       'Hinge at hips to ~45° or parallel, neutral spine',
       'Pull bar towards lower abdomen/belly button',
@@ -129,7 +129,7 @@ export const DEFAULT_EXERCISES = [
     muscle: 'back',
     secondaryMuscles: ['biceps', 'core'],
     youtubeUrl: 'https://www.youtube.com/watch?v=eGo4IYlbE5g',
-    photoUrl: '',
+    photoUrl: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=600&auto=format&fit=crop&q=80',
     cues: [
       'Start from a dead hang with lats engaged',
       'Drive elbows down to ribs until chin clears bar',
@@ -146,7 +146,7 @@ export const DEFAULT_EXERCISES = [
     muscle: 'shoulders',
     secondaryMuscles: ['triceps', 'core'],
     youtubeUrl: 'https://www.youtube.com/watch?v=2yjwXTZQDDI',
-    photoUrl: '',
+    photoUrl: 'https://images.unsplash.com/photo-1541534741688-6078c6bfb5c5?w=600&auto=format&fit=crop&q=80',
     cues: [
       'Grip bar just outside shoulders, resting bar on front delts/collarbone',
       'Squeeze glutes and quads tight to create rigid base',
@@ -161,7 +161,7 @@ export const DEFAULT_EXERCISES = [
     muscle: 'shoulders',
     secondaryMuscles: [],
     youtubeUrl: 'https://www.youtube.com/watch?v=3VcKaXpzqRo',
-    photoUrl: '',
+    photoUrl: 'https://images.unsplash.com/photo-1583454110551-21f2fa2afe61?w=600&auto=format&fit=crop&q=80',
     cues: [
       'Slight forward torso lean (~10°)',
       'Raise dumbbells out in the scapular plane (~30° forward of body)',
@@ -176,7 +176,7 @@ export const DEFAULT_EXERCISES = [
     muscle: 'shoulders',
     secondaryMuscles: ['back'],
     youtubeUrl: 'https://www.youtube.com/watch?v=rep-qVOkqgk',
-    photoUrl: '',
+    photoUrl: 'https://images.unsplash.com/photo-1599058917212-d750089bc07e?w=600&auto=format&fit=crop&q=80',
     cues: [
       'Attach rope at eye level; grip with thumbs pointed backward',
       'Pull rope towards nose/forehead while externally rotating shoulders',
@@ -193,7 +193,7 @@ export const DEFAULT_EXERCISES = [
     muscle: 'biceps',
     secondaryMuscles: ['forearms'],
     youtubeUrl: 'https://www.youtube.com/watch?v=ykJmrZ5v0Oo',
-    photoUrl: '',
+    photoUrl: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=600&auto=format&fit=crop&q=80',
     cues: [
       'Stand upright, shoulder-width grip on bar',
       'Pin elbows to ribs; only forearms should move',
@@ -208,7 +208,7 @@ export const DEFAULT_EXERCISES = [
     muscle: 'biceps',
     secondaryMuscles: ['forearms'],
     youtubeUrl: 'https://www.youtube.com/watch?v=zC3nLlEvin4',
-    photoUrl: '',
+    photoUrl: 'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=600&auto=format&fit=crop&q=80',
     cues: [
       'Hold dumbbells with neutral grip (palms facing each other)',
       'Curl dumbbells up while keeping wrists locked neutral',
@@ -225,7 +225,7 @@ export const DEFAULT_EXERCISES = [
     muscle: 'triceps',
     secondaryMuscles: [],
     youtubeUrl: 'https://www.youtube.com/watch?v=vB5OHsJ3EME',
-    photoUrl: '',
+    photoUrl: 'https://images.unsplash.com/photo-1530822847156-5df684ec5ee1?w=600&auto=format&fit=crop&q=80',
     cues: [
       'Hips hinged slightly back, elbows tucked close to sides',
       'Push down extending arms completely',
@@ -240,7 +240,7 @@ export const DEFAULT_EXERCISES = [
     muscle: 'triceps',
     secondaryMuscles: [],
     youtubeUrl: 'https://www.youtube.com/watch?v=d_KZxkY_0cM',
-    photoUrl: '',
+    photoUrl: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&auto=format&fit=crop&q=80',
     cues: [
       'Lie on bench holding EZ-curl bar with arms angled back ~10°',
       'Bend at elbows lowering bar towards forehead or crown of head',
@@ -269,11 +269,11 @@ export const DEFAULT_EXERCISES = [
   },
   {
     id: 'leg-press-machine',
-    name: 'Leg Press',
+    name: 'Leg Press Machine',
     muscle: 'quads',
     secondaryMuscles: ['glutes'],
     youtubeUrl: 'https://www.youtube.com/watch?v=IZxyjW7MPJQ',
-    photoUrl: '',
+    photoUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=600&auto=format&fit=crop&q=80',
     cues: [
       'Sit fully with back and glutes pressed firmly against seat pads',
       'Feet placed shoulder-width in center of platform',
@@ -288,7 +288,7 @@ export const DEFAULT_EXERCISES = [
     muscle: 'quads',
     secondaryMuscles: ['glutes', 'hamstrings'],
     youtubeUrl: 'https://www.youtube.com/watch?v=2C-uNgKwPLE',
-    photoUrl: '',
+    photoUrl: 'https://images.unsplash.com/photo-1434682881908-b43d0467b798?w=600&auto=format&fit=crop&q=80',
     cues: [
       'Rear foot elevated on bench behind you',
       'Front foot positioned so front shin is roughly vertical at bottom',
@@ -305,7 +305,7 @@ export const DEFAULT_EXERCISES = [
     muscle: 'hamstrings',
     secondaryMuscles: ['glutes', 'back'],
     youtubeUrl: 'https://www.youtube.com/watch?v=JCXUYuzwNrM',
-    photoUrl: '',
+    photoUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=600&auto=format&fit=crop&q=80',
     cues: [
       'Feet hip-width apart, soft bend in knees (knees stay fixed in this angle)',
       'Push hips straight backward towards wall behind you',
@@ -320,7 +320,7 @@ export const DEFAULT_EXERCISES = [
     muscle: 'hamstrings',
     secondaryMuscles: ['calves'],
     youtubeUrl: 'https://www.youtube.com/watch?v=1Tq3QdYUuHs',
-    photoUrl: '',
+    photoUrl: 'https://images.unsplash.com/photo-1584735935682-2f2b69dff9d2?w=600&auto=format&fit=crop&q=80',
     cues: [
       'Pad rests just below calves on lower Achilles tendon',
       'Keep hips pressed flat into bench throughout movement',
@@ -337,7 +337,7 @@ export const DEFAULT_EXERCISES = [
     muscle: 'glutes',
     secondaryMuscles: ['hamstrings'],
     youtubeUrl: 'https://www.youtube.com/watch?v=xDmFkJxPzeM',
-    photoUrl: '',
+    photoUrl: 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=600&auto=format&fit=crop&q=80',
     cues: [
       'Upper back braced securely across bench at scapula level',
       'Barbell cushioned over hip crease with feet flat on floor',
@@ -354,7 +354,7 @@ export const DEFAULT_EXERCISES = [
     muscle: 'calves',
     secondaryMuscles: [],
     youtubeUrl: 'https://www.youtube.com/watch?v=-M4-G8p8fmc',
-    photoUrl: '',
+    photoUrl: 'https://images.unsplash.com/photo-1517838277536-f5f99be501cd?w=600&auto=format&fit=crop&q=80',
     cues: [
       'Balls of feet on edge of platform, heels hanging off',
       'Lower heels for a deep 2-second stretch at bottom',
@@ -371,7 +371,7 @@ export const DEFAULT_EXERCISES = [
     muscle: 'core',
     secondaryMuscles: ['forearms'],
     youtubeUrl: 'https://www.youtube.com/watch?v=Pr1ieGZ5atk',
-    photoUrl: '',
+    photoUrl: 'https://images.unsplash.com/photo-1526506118085-60ce8714f8c5?w=600&auto=format&fit=crop&q=80',
     cues: [
       'Hang from bar with active shoulders',
       'Curl pelvis up toward chest rather than just swinging legs',
@@ -386,7 +386,7 @@ export const DEFAULT_EXERCISES = [
     muscle: 'core',
     secondaryMuscles: ['shoulders', 'back'],
     youtubeUrl: 'https://www.youtube.com/watch?v=rqiTPdK1cWg',
-    photoUrl: '',
+    photoUrl: 'https://images.unsplash.com/photo-1571019613454-1cb2f99b2d8b?w=600&auto=format&fit=crop&q=80',
     cues: [
       'Kneel on mat with wheel directly beneath shoulders',
       'Round upper back slightly and tuck pelvis in posterior pelvic tilt',
@@ -403,7 +403,7 @@ export const DEFAULT_EXERCISES = [
     muscle: 'forearms',
     secondaryMuscles: [],
     youtubeUrl: 'https://www.youtube.com/watch?v=3VkWz_h_JOU',
-    photoUrl: '',
+    photoUrl: 'https://images.unsplash.com/photo-1581009146145-b5ef050c2e1e?w=600&auto=format&fit=crop&q=80',
     cues: [
       'Forearms resting flat on thighs or bench with wrists hanging off edge',
       'Lower bar slowly allowing it to roll into fingers for full extension',
@@ -419,7 +419,7 @@ export const DEFAULT_EXERCISES = [
     muscle: 'cardio',
     secondaryMuscles: ['calves', 'glutes'],
     youtubeUrl: 'https://www.youtube.com/watch?v=F3-9rR3yT78',
-    photoUrl: '',
+    photoUrl: 'https://images.unsplash.com/photo-1538805060514-97d9cc17730c?w=600&auto=format&fit=crop&q=80',
     cues: [
       'Set incline to 10% - 15% and speed to 4.5 - 5.5 km/h',
       'Walk without holding onto handrails for maximum caloric burn & core engagement',
