@@ -1,7 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { 
   Calendar, ChevronLeft, ChevronRight, Plus, Trash2, Check, Copy, 
-  Dumbbell, Flame, Trophy, Info, Sparkles, MessageSquare, Clock
+  Dumbbell, Flame, Trophy, Info, Sparkles, MessageSquare, Clock, 
+  Calculator, ArrowUpRight, CheckCircle2, SlidersHorizontal
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { MUSCLE_GROUPS, DEFAULT_EXERCISES } from '../data/defaultExercises';
@@ -10,12 +11,14 @@ import {
   getAllExercises, getSettings, getPersonalRecords, getActiveProfileId 
 } from '../services/storage';
 import PostureModal from './PostureModal';
+import PlateCalculatorModal from './PlateCalculatorModal';
+import WorkoutHero from './WorkoutHero';
 
-export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
+export default function WorkoutLogger({ onTriggerTimer, activeProfileId, onOpenAnalytics }) {
   const settings = getSettings();
   const unit = settings.unit || 'kg';
 
-  // Current Date State
+  // Date State
   const [selectedDate, setSelectedDate] = useState(() => {
     return new Date().toISOString().split('T')[0];
   });
@@ -26,14 +29,13 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
   const [showExercisePicker, setShowExercisePicker] = useState(false);
   const [pickerMuscle, setPickerMuscle] = useState('chest');
   const [personalRecords, setPersonalRecords] = useState({});
+  const [plateCalcWeight, setPlateCalcWeight] = useState(null);
 
-  // Compute Day of Week
   const getDayName = (dateStr) => {
     const d = new Date(dateStr + 'T12:00:00');
     return d.toLocaleDateString('en-US', { weekday: 'long', month: 'short', day: 'numeric', year: 'numeric' });
   };
 
-  // Load or initialize workout for current date
   useEffect(() => {
     const workouts = getWorkouts(activeProfileId);
     const existing = workouts.find(w => w.date === selectedDate);
@@ -42,7 +44,6 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
       setCurrentWorkout(existing);
       setSelectedMuscles(existing.muscles || ['chest']);
     } else {
-      // Create blank draft session
       const newWorkout = {
         id: 'wo_' + selectedDate + '_' + activeProfileId,
         date: selectedDate,
@@ -68,7 +69,7 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
   const toggleMuscle = (muscleId) => {
     let next;
     if (selectedMuscles.includes(muscleId)) {
-      if (selectedMuscles.length === 1) return; // Keep at least one
+      if (selectedMuscles.length === 1) return;
       next = selectedMuscles.filter(m => m !== muscleId);
     } else {
       next = [...selectedMuscles, muscleId];
@@ -81,11 +82,8 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
     }
   };
 
-  // Add exercise to current workout
   const handleAddExercise = (exerciseTemplate) => {
     if (!currentWorkout) return;
-
-    // Look up previous performance for this exercise
     const prev = getPreviousPerformance(exerciseTemplate.name, currentWorkout.id, activeProfileId);
 
     const newExerciseLog = {
@@ -105,6 +103,7 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
           weight: prev?.weight || (unit === 'kg' ? 60 : 135),
           reps: prev?.reps || 10,
           completed: false,
+          rpe: 8,
           previous: prev ? `${prev.weight}${unit} × ${prev.reps}` : '-'
         }
       ]
@@ -125,7 +124,6 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
     saveWorkout(updated, activeProfileId);
   };
 
-  // Sets Management
   const handleAddSet = (exerciseLogId) => {
     if (!currentWorkout) return;
     const updatedExercises = currentWorkout.exercises.map(ex => {
@@ -139,6 +137,7 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
         weight: lastSet ? lastSet.weight : (unit === 'kg' ? 60 : 135),
         reps: lastSet ? lastSet.reps : 10,
         completed: false,
+        rpe: lastSet?.rpe || 8,
         previous: lastSet?.previous || '-'
       };
       return { ...ex, sets: [...sets, newSet] };
@@ -178,26 +177,32 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
     saveWorkout(updatedWorkout, activeProfileId);
   };
 
+  const handleAdjustWeight = (exerciseLogId, setId, currentWeight, delta) => {
+    const nextWeight = Math.max(0, (parseFloat(currentWeight) || 0) + delta);
+    handleSetChange(exerciseLogId, setId, 'weight', nextWeight);
+  };
+
+  const handleAdjustReps = (exerciseLogId, setId, currentReps, delta) => {
+    const nextReps = Math.max(1, (parseInt(currentReps) || 0) + delta);
+    handleSetChange(exerciseLogId, setId, 'reps', nextReps);
+  };
+
   const handleToggleComplete = (exerciseLog, set) => {
     const isNowComplete = !set.completed;
     handleSetChange(exerciseLog.id, set.id, 'completed', isNowComplete);
 
     if (isNowComplete) {
-      // 1. Check for Personal Record (PR)
       const currentWeight = Number(set.weight) || 0;
-      const currentReps = Number(set.reps) || 0;
       const existingPR = personalRecords[exerciseLog.name]?.maxWeight || 0;
 
       if (currentWeight > 0 && currentWeight > existingPR && existingPR > 0) {
-        // Trigger celebratory PR confetti!
         confetti({
-          particleCount: 80,
-          spread: 70,
+          particleCount: 100,
+          spread: 80,
           origin: { y: 0.6 }
         });
       }
 
-      // 2. Trigger floating rest timer
       if (settings.autoTimerOnComplete !== false && onTriggerTimer) {
         onTriggerTimer(settings.restSeconds || 90);
       }
@@ -215,34 +220,42 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
   return (
     <div className="space-y-6 pb-24 max-w-4xl mx-auto">
       
-      {/* Date Header & Quick Switcher */}
-      <div className="glass-card p-4 sm:p-5 border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
+      {/* 1. Command Center / Workout Hero Widget */}
+      <WorkoutHero
+        currentWorkout={currentWorkout}
+        unit={unit}
+        onOpenPlateCalc={() => setPlateCalcWeight(80)}
+        onOpenAnalytics={onOpenAnalytics}
+      />
+
+      {/* 2. Date Navigation Bar */}
+      <div className="pro-card p-4 sm:p-5 border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <button
             onClick={() => changeDate(-1)}
-            className="p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 transition-colors"
+            className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 transition-colors"
             title="Previous Day"
           >
             <ChevronLeft className="w-5 h-5" />
           </button>
           
           <div className="text-center sm:text-left">
-            <h2 className="text-lg sm:text-xl font-bold text-white flex items-center gap-2 justify-center sm:justify-start">
-              <Calendar className="w-5 h-5 text-emerald-400" />
+            <h2 className="text-lg sm:text-xl font-black text-white flex items-center gap-2 justify-center sm:justify-start">
+              <Calendar className="w-5 h-5 text-fitrex-lime" />
               {getDayName(selectedDate)}
             </h2>
             <p className="text-xs text-slate-400">
               {selectedDate === new Date().toISOString().split('T')[0] ? (
-                <span className="text-emerald-400 font-semibold">Today's Session</span>
+                <span className="text-fitrex-lime font-bold">● Today's Active Session</span>
               ) : (
-                'Workout Log'
+                'Workout Log Archive'
               )}
             </p>
           </div>
 
           <button
             onClick={() => changeDate(1)}
-            className="p-2 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 transition-colors"
+            className="p-2.5 rounded-xl bg-slate-900 border border-slate-800 hover:border-slate-700 text-slate-300 transition-colors"
             title="Next Day"
           >
             <ChevronRight className="w-5 h-5" />
@@ -252,27 +265,27 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
         <div className="flex items-center gap-2">
           <button
             onClick={() => setSelectedDate(new Date().toISOString().split('T')[0])}
-            className="btn-secondary text-xs py-1.5 px-3"
+            className="btn-pro-secondary text-xs py-2 px-3.5"
           >
-            Today
+            Jump to Today
           </button>
           <input
             type="date"
             value={selectedDate}
             onChange={e => setSelectedDate(e.target.value)}
-            className="input-field text-xs py-1.5 px-2.5 cursor-pointer"
+            className="input-pro text-xs py-2 px-3 cursor-pointer"
           />
         </div>
       </div>
 
-      {/* Muscle Group Chips (Select 1, 2, 3+) */}
-      <div className="glass-card p-4 sm:p-5 border-slate-800">
-        <div className="flex items-center justify-between mb-3">
-          <h3 className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-            <Flame className="w-4 h-4 text-emerald-400" /> Target Muscles (Pick 1, 2, or 3+)
+      {/* 3. Target Muscles Selector (Multi-select) */}
+      <div className="pro-card p-5 border-slate-800">
+        <div className="flex items-center justify-between mb-3.5">
+          <h3 className="text-xs font-black uppercase tracking-wider text-slate-300 flex items-center gap-2">
+            <Flame className="w-4 h-4 text-fitrex-lime" /> Target Muscle Groups
           </h3>
-          <span className="text-[11px] text-slate-400">
-            {selectedMuscles.length} selected
+          <span className="text-xs font-bold text-fitrex-lime bg-fitrex-lime/10 px-2.5 py-0.5 rounded-full border border-fitrex-lime/30">
+            {selectedMuscles.length} Active
           </span>
         </div>
 
@@ -283,24 +296,24 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
               <button
                 key={m.id}
                 onClick={() => toggleMuscle(m.id)}
-                className={`badge-muscle text-xs py-2 px-3.5 transition-all ${
+                className={`text-xs font-bold py-2 px-3.5 rounded-xl transition-all flex items-center gap-1.5 ${
                   isSelected
-                    ? 'bg-emerald-500/20 text-emerald-300 border-emerald-500/50 shadow-md shadow-emerald-500/10 scale-105'
-                    : 'bg-slate-900/60 text-slate-400 border-slate-800 hover:border-slate-700 hover:text-slate-200'
+                    ? 'bg-fitrex-lime text-slate-950 font-black shadow-glow-lime scale-105 ring-2 ring-fitrex-lime/40'
+                    : 'bg-slate-900/80 text-slate-400 border border-slate-800 hover:border-slate-700 hover:text-slate-200'
                 }`}
               >
-                {m.name}
+                <span>{m.name}</span>
               </button>
             );
           })}
         </div>
       </div>
 
-      {/* Exercises Section */}
+      {/* 4. Exercises Logging Area */}
       <div className="space-y-4">
         <div className="flex items-center justify-between px-1">
-          <h3 className="text-sm font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
-            <Dumbbell className="w-4 h-4 text-emerald-400" /> Logged Exercises
+          <h3 className="text-sm font-black uppercase tracking-wider text-slate-200 flex items-center gap-2">
+            <Dumbbell className="w-4 h-4 text-fitrex-lime" /> Logged Exercises
           </h3>
           
           <button
@@ -308,71 +321,71 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
               setPickerMuscle(selectedMuscles[0] || 'chest');
               setShowExercisePicker(true);
             }}
-            className="btn-primary text-xs py-2 px-3.5"
+            className="btn-pro-primary text-xs py-2.5 px-4"
           >
             <Plus className="w-4 h-4" /> Add Exercise
           </button>
         </div>
 
-        {/* Exercises List */}
         {(!currentWorkout?.exercises || currentWorkout.exercises.length === 0) ? (
-          <div className="glass-card p-10 text-center border-dashed border-slate-800 flex flex-col items-center justify-center">
-            <div className="w-14 h-14 rounded-2xl bg-slate-900/80 border border-slate-800 flex items-center justify-center text-slate-500 mb-3">
-              <Dumbbell className="w-7 h-7 -rotate-45" />
+          <div className="pro-card p-12 text-center border-dashed border-slate-800 flex flex-col items-center justify-center">
+            <div className="w-16 h-16 rounded-3xl bg-slate-900/80 border border-slate-800 flex items-center justify-center text-slate-600 mb-4 shadow-inner">
+              <Dumbbell className="w-8 h-8 -rotate-45" />
             </div>
-            <h4 className="text-base font-semibold text-white mb-1">No exercises logged yet for this date</h4>
-            <p className="text-xs text-slate-400 max-w-sm mb-4">
-              Select your target muscles above and tap "Add Exercise" to record your sets, weights, and reps.
+            <h4 className="text-lg font-bold text-white mb-1">Workout Session is Ready</h4>
+            <p className="text-xs text-slate-400 max-w-sm mb-5">
+              Select your target muscles above and tap "Add Exercise" to log sets, weights, and reps.
             </p>
             <button
               onClick={() => {
                 setPickerMuscle(selectedMuscles[0] || 'chest');
                 setShowExercisePicker(true);
               }}
-              className="btn-primary text-xs py-2.5 px-4"
+              className="btn-pro-primary text-xs py-2.5 px-5"
             >
-              <Plus className="w-4 h-4" /> Browse & Add Exercise
+              <Plus className="w-4 h-4" /> Browse 40+ Exercise Guides
             </button>
           </div>
         ) : (
           currentWorkout.exercises.map((exLog, exIdx) => {
             const pr = personalRecords[exLog.name];
             return (
-              <div key={exLog.id} className="glass-card p-4 sm:p-5 border-slate-800 space-y-4">
+              <div key={exLog.id} className="pro-card p-5 border-slate-800 space-y-4 shadow-xl">
                 
                 {/* Exercise Header */}
-                <div className="flex items-center justify-between gap-2 pb-3 border-b border-slate-800/80">
-                  <div className="flex items-center gap-2.5">
-                    <span className="w-6 h-6 rounded-lg bg-emerald-500/15 text-emerald-400 text-xs font-bold flex items-center justify-center">
+                <div className="flex items-center justify-between gap-3 pb-3.5 border-b border-slate-800/80">
+                  <div className="flex items-center gap-3">
+                    <span className="w-7 h-7 rounded-xl bg-fitrex-lime/15 text-fitrex-lime text-xs font-black flex items-center justify-center border border-fitrex-lime/30">
                       {exIdx + 1}
                     </span>
                     <div>
-                      <h4 className="text-base font-bold text-white flex items-center gap-2">
+                      <h4 className="text-base font-extrabold text-white flex items-center gap-2">
                         {exLog.name}
                         {pr && pr.maxWeight > 0 && (
-                          <span className="text-[10px] bg-amber-500/15 text-amber-400 border border-amber-500/30 px-1.5 py-0.5 rounded font-medium flex items-center gap-1">
+                          <span className="text-[10px] bg-amber-500/15 text-amber-400 border border-amber-500/30 px-2 py-0.5 rounded-full font-bold flex items-center gap-1">
                             <Trophy className="w-3 h-3" /> PR: {pr.maxWeight}{unit}
                           </span>
                         )}
                       </h4>
-                      <span className="text-[11px] text-emerald-400/80 uppercase font-semibold">
+                      <span className="text-[11px] font-bold text-fitrex-lime uppercase tracking-wider">
                         {exLog.muscle}
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-2">
                     <button
                       onClick={() => setSelectedExerciseForModal(exLog)}
-                      className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-300 hover:text-emerald-400 hover:border-emerald-500/40 transition-colors"
-                      title="Posture & Form Guide (YouTube & Photos)"
+                      className="btn-pro-secondary text-xs py-1.5 px-3 flex items-center gap-1.5 hover:text-fitrex-lime hover:border-fitrex-lime/40"
+                      title="Posture & Video Guide"
                     >
-                      <Info className="w-4 h-4" />
+                      <Info className="w-3.5 h-3.5 text-fitrex-lime" />
+                      <span className="hidden sm:inline">Form Guide</span>
                     </button>
                     <button
                       onClick={() => handleRemoveExercise(exLog.id)}
-                      className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-500 hover:text-rose-400 hover:border-rose-500/40 transition-colors"
-                      title="Delete Exercise"
+                      className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-500 hover:text-rose-400 hover:border-rose-500/40 transition-colors"
+                      title="Delete Movement"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
@@ -381,109 +394,155 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
 
                 {/* Sets Table */}
                 <div className="overflow-x-auto">
-                  <table className="w-full text-left border-collapse">
+                  <table className="w-full text-left border-collapse min-w-[500px]">
                     <thead>
-                      <tr className="text-[10px] font-bold text-slate-400 uppercase tracking-wider border-b border-slate-800">
-                        <th className="py-2 px-1 text-center w-10">Set</th>
-                        <th className="py-2 px-1 text-center w-12" title="Click to cycle: Normal, Warmup, Drop, Failure">Type</th>
-                        <th className="py-2 px-2 text-center">Previous</th>
-                        <th className="py-2 px-2 text-center">{unit.toUpperCase()}</th>
-                        <th className="py-2 px-2 text-center">Reps</th>
-                        <th className="py-2 px-1 text-center w-12">Done</th>
-                        <th className="py-2 px-1 w-8"></th>
+                      <tr className="text-[10px] font-extrabold text-slate-400 uppercase tracking-wider border-b border-slate-800">
+                        <th className="py-2.5 px-2 text-center w-10">Set</th>
+                        <th className="py-2.5 px-2 text-center w-14" title="Normal, Warmup, Drop, Failure">Type</th>
+                        <th className="py-2.5 px-3 text-center">Previous</th>
+                        <th className="py-2.5 px-3 text-center">{unit.toUpperCase()}</th>
+                        <th className="py-2.5 px-3 text-center">Reps</th>
+                        <th className="py-2.5 px-2 text-center w-14">RPE</th>
+                        <th className="py-2.5 px-2 text-center w-16">Done</th>
+                        <th className="py-2.5 px-1 w-8"></th>
                       </tr>
                     </thead>
                     <tbody className="divide-y divide-slate-800/40">
                       {(exLog.sets || []).map((set) => (
                         <tr
                           key={set.id}
-                          className={`transition-colors ${
-                            set.completed ? 'bg-emerald-500/5 text-emerald-200' : 'hover:bg-slate-900/30'
+                          className={`transition-all ${
+                            set.completed 
+                              ? 'bg-fitrex-lime/[0.07] text-slate-100' 
+                              : 'hover:bg-slate-900/40'
                           }`}
                         >
                           {/* Set Number */}
-                          <td className="py-2.5 px-1 text-center font-bold text-xs mono-num text-slate-400">
+                          <td className="py-3 px-2 text-center font-extrabold text-xs mono-num text-slate-400">
                             {set.setNum}
                           </td>
 
-                          {/* Set Type */}
-                          <td className="py-2.5 px-1 text-center">
+                          {/* Set Type Badge */}
+                          <td className="py-3 px-2 text-center">
                             <button
                               type="button"
                               onClick={() => cycleSetType(exLog.id, set.id, set.type || 'N')}
-                              className={`w-6 h-6 rounded-md font-bold text-[10px] uppercase transition-colors inline-flex items-center justify-center ${
+                              className={`w-7 h-7 rounded-lg font-black text-xs uppercase transition-all inline-flex items-center justify-center ${
                                 set.type === 'W'
-                                  ? 'bg-amber-500/20 text-amber-300 border border-amber-500/40'
+                                  ? 'bg-amber-500/20 text-amber-400 border border-amber-500/40'
                                   : set.type === 'D'
-                                  ? 'bg-purple-500/20 text-purple-300 border border-purple-500/40'
+                                  ? 'bg-purple-500/20 text-purple-400 border border-purple-500/40'
                                   : set.type === 'F'
-                                  ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                                  : 'bg-slate-800 text-slate-300'
+                                  ? 'bg-rose-500/20 text-rose-400 border border-rose-500/40'
+                                  : 'bg-slate-800 text-slate-300 border border-slate-700'
                               }`}
-                              title="Click to toggle Warmup (W), Drop Set (D), Failure (F), or Normal (1)"
+                              title="Click to toggle: Normal (N), Warmup (W), Drop Set (D), Failure (F)"
                             >
                               {set.type || 'N'}
                             </button>
                           </td>
 
-                          {/* Previous */}
-                          <td className="py-2.5 px-2 text-center text-xs text-slate-500 mono-num">
+                          {/* Previous Performance */}
+                          <td className="py-3 px-3 text-center text-xs text-slate-400 mono-num font-semibold">
                             {set.previous || '-'}
                           </td>
 
-                          {/* Weight */}
-                          <td className="py-2.5 px-2 text-center">
+                          {/* Weight with Steppers */}
+                          <td className="py-3 px-3 text-center">
                             <div className="flex items-center justify-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleAdjustWeight(exLog.id, set.id, set.weight, -2.5)}
+                                className="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs font-bold flex items-center justify-center"
+                              >
+                                -
+                              </button>
                               <input
                                 type="number"
                                 step="0.5"
                                 value={set.weight}
                                 onChange={e => handleSetChange(exLog.id, set.id, 'weight', e.target.value)}
-                                className={`w-16 input-field py-1 px-1.5 text-center text-xs font-bold mono-num ${
-                                  set.completed ? 'border-emerald-500/40 text-emerald-300' : ''
+                                className={`w-16 input-pro py-1 px-1.5 text-center text-xs font-black mono-num ${
+                                  set.completed ? 'border-fitrex-lime/50 text-fitrex-lime bg-slate-900' : ''
                                 }`}
                               />
+                              <button
+                                type="button"
+                                onClick={() => handleAdjustWeight(exLog.id, set.id, set.weight, 2.5)}
+                                className="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs font-bold flex items-center justify-center"
+                              >
+                                +
+                              </button>
                             </div>
                           </td>
 
-                          {/* Reps */}
-                          <td className="py-2.5 px-2 text-center">
+                          {/* Reps with Steppers */}
+                          <td className="py-3 px-3 text-center">
                             <div className="flex items-center justify-center gap-1">
+                              <button
+                                type="button"
+                                onClick={() => handleAdjustReps(exLog.id, set.id, set.reps, -1)}
+                                className="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs font-bold flex items-center justify-center"
+                              >
+                                -
+                              </button>
                               <input
                                 type="number"
                                 value={set.reps}
                                 onChange={e => handleSetChange(exLog.id, set.id, 'reps', e.target.value)}
-                                className={`w-14 input-field py-1 px-1.5 text-center text-xs font-bold mono-num ${
-                                  set.completed ? 'border-emerald-500/40 text-emerald-300' : ''
+                                className={`w-14 input-pro py-1 px-1.5 text-center text-xs font-black mono-num ${
+                                  set.completed ? 'border-fitrex-lime/50 text-fitrex-lime bg-slate-900' : ''
                                 }`}
                               />
+                              <button
+                                type="button"
+                                onClick={() => handleAdjustReps(exLog.id, set.id, set.reps, 1)}
+                                className="w-6 h-6 rounded bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white text-xs font-bold flex items-center justify-center"
+                              >
+                                +
+                              </button>
                             </div>
                           </td>
 
-                          {/* Completed Checkbox */}
-                          <td className="py-2.5 px-1 text-center">
+                          {/* RPE Selector */}
+                          <td className="py-3 px-2 text-center">
+                            <select
+                              value={set.rpe || 8}
+                              onChange={e => handleSetChange(exLog.id, set.id, 'rpe', parseInt(e.target.value))}
+                              className="input-pro py-1 px-1 text-center text-[11px] font-bold mono-num bg-slate-900 cursor-pointer"
+                              title="Rate of Perceived Exertion (6 to 10)"
+                            >
+                              <option value={10}>10</option>
+                              <option value={9}>9</option>
+                              <option value={8}>8</option>
+                              <option value={7}>7</option>
+                              <option value={6}>6</option>
+                            </select>
+                          </td>
+
+                          {/* Done Checkbox */}
+                          <td className="py-3 px-2 text-center">
                             <button
                               type="button"
                               onClick={() => handleToggleComplete(exLog, set)}
-                              className={`w-7 h-7 rounded-lg border flex items-center justify-center mx-auto transition-all ${
+                              className={`w-8 h-8 rounded-xl border flex items-center justify-center mx-auto transition-all ${
                                 set.completed
-                                  ? 'bg-emerald-500 border-emerald-400 text-slate-950 shadow-md shadow-emerald-500/30'
-                                  : 'bg-slate-900 border-slate-700 text-slate-600 hover:border-emerald-500/40'
+                                  ? 'bg-fitrex-lime border-fitrex-lime text-slate-950 shadow-glow-lime scale-105'
+                                  : 'bg-slate-900 border-slate-700 text-slate-600 hover:border-fitrex-lime/50'
                               }`}
-                              title={set.completed ? 'Completed (Click to unmark)' : 'Mark Set Completed'}
+                              title={set.completed ? 'Completed' : 'Mark Completed'}
                             >
-                              <Check className={`w-4 h-4 font-bold ${set.completed ? 'scale-110' : 'opacity-0'}`} />
+                              <Check className={`w-5 h-5 font-black ${set.completed ? 'stroke-[3]' : 'opacity-0'}`} />
                             </button>
                           </td>
 
                           {/* Delete Set */}
-                          <td className="py-2.5 px-1 text-center">
+                          <td className="py-3 px-1 text-center">
                             {exLog.sets.length > 1 && (
                               <button
                                 type="button"
                                 onClick={() => handleRemoveSet(exLog.id, set.id)}
-                                className="p-1 text-slate-600 hover:text-rose-400 rounded transition-colors"
-                                title="Remove Set"
+                                className="p-1.5 text-slate-600 hover:text-rose-400 rounded-lg transition-colors"
                               >
                                 <Trash2 className="w-3.5 h-3.5" />
                               </button>
@@ -495,41 +554,55 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                   </table>
                 </div>
 
-                {/* Add Set Button */}
-                <div className="flex items-center justify-between pt-1">
-                  <button
-                    type="button"
-                    onClick={() => handleAddSet(exLog.id)}
-                    className="btn-secondary text-xs py-1.5 px-3 border-dashed border-slate-700 hover:border-emerald-500/40"
-                  >
-                    <Plus className="w-3.5 h-3.5" /> Add Set
-                  </button>
+                {/* Set Actions: Add Set, Duplicate, Plate Calc */}
+                <div className="flex flex-wrap items-center justify-between gap-2 pt-2 border-t border-slate-800/80">
+                  <div className="flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => handleAddSet(exLog.id)}
+                      className="btn-pro-secondary text-xs py-1.5 px-3 border-dashed border-slate-700 hover:border-fitrex-lime/50"
+                    >
+                      <Plus className="w-3.5 h-3.5 text-fitrex-lime" /> Add Set
+                    </button>
 
-                  <button
-                    type="button"
-                    onClick={() => {
-                      const sets = exLog.sets || [];
-                      if (sets.length > 0) {
-                        const last = sets[sets.length - 1];
-                        const newSet = {
-                          id: 'set_' + Date.now(),
-                          setNum: sets.length + 1,
-                          type: last.type || 'N',
-                          weight: last.weight,
-                          reps: last.reps,
-                          completed: false,
-                          previous: last.previous
-                        };
-                        const updated = currentWorkout.exercises.map(e => e.id === exLog.id ? { ...e, sets: [...sets, newSet] } : e);
-                        const updatedWo = { ...currentWorkout, exercises: updated };
-                        setCurrentWorkout(updatedWo);
-                        saveWorkout(updatedWo, activeProfileId);
-                      }
-                    }}
-                    className="text-[11px] text-slate-400 hover:text-emerald-400 flex items-center gap-1 transition-colors"
-                  >
-                    <Copy className="w-3 h-3" /> Duplicate Set
-                  </button>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        const sets = exLog.sets || [];
+                        if (sets.length > 0) {
+                          const last = sets[sets.length - 1];
+                          const newSet = {
+                            id: 'set_' + Date.now(),
+                            setNum: sets.length + 1,
+                            type: last.type || 'N',
+                            weight: last.weight,
+                            reps: last.reps,
+                            rpe: last.rpe || 8,
+                            completed: false,
+                            previous: last.previous
+                          };
+                          const updated = currentWorkout.exercises.map(e => e.id === exLog.id ? { ...e, sets: [...sets, newSet] } : e);
+                          const updatedWo = { ...currentWorkout, exercises: updated };
+                          setCurrentWorkout(updatedWo);
+                          saveWorkout(updatedWo, activeProfileId);
+                        }
+                      }}
+                      className="btn-pro-secondary text-xs py-1.5 px-3 text-slate-400 hover:text-white"
+                    >
+                      <Copy className="w-3.5 h-3.5" /> Duplicate Last Set
+                    </button>
+                  </div>
+
+                  {/* Plate Calculator Button for this exercise */}
+                  {exLog.sets?.length > 0 && (
+                    <button
+                      type="button"
+                      onClick={() => setPlateCalcWeight(exLog.sets[exLog.sets.length - 1]?.weight || 60)}
+                      className="text-xs text-slate-400 hover:text-fitrex-lime flex items-center gap-1 transition-colors"
+                    >
+                      <Calculator className="w-3.5 h-3.5" /> Calculate Barbell Plates
+                    </button>
+                  )}
                 </div>
 
               </div>
@@ -538,33 +611,33 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
         )}
       </div>
 
-      {/* Workout Session Notes */}
+      {/* Workout Notes Card */}
       {currentWorkout?.exercises?.length > 0 && (
-        <div className="glass-card p-4 sm:p-5 border-slate-800 space-y-2">
-          <label className="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
-            <MessageSquare className="w-3.5 h-3.5 text-emerald-400" /> Workout Reflection & Notes
+        <div className="pro-card p-5 border-slate-800 space-y-3">
+          <label className="text-xs font-black uppercase tracking-wider text-slate-300 flex items-center gap-2">
+            <MessageSquare className="w-4 h-4 text-fitrex-lime" /> Workout Reflection & Notes
           </label>
           <textarea
             rows={2}
-            placeholder="e.g. Great chest pump today, energy was 9/10, improved bench press form..."
+            placeholder="e.g. Chest felt explosive, added 2.5kg to bench press, took 90s rest..."
             value={currentWorkout.notes || ''}
             onChange={e => {
               const updated = { ...currentWorkout, notes: e.target.value };
               setCurrentWorkout(updated);
               saveWorkout(updated, activeProfileId);
             }}
-            className="w-full input-field text-xs"
+            className="w-full input-pro text-xs"
           />
         </div>
       )}
 
       {/* Exercise Picker Modal */}
       {showExercisePicker && (
-        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
-          <div className="w-full max-w-lg glass-card p-5 border-slate-700 max-h-[85vh] flex flex-col shadow-2xl">
-            <div className="flex items-center justify-between pb-3 border-b border-slate-800">
-              <h3 className="text-base font-bold text-white flex items-center gap-2">
-                <Dumbbell className="w-4 h-4 text-emerald-400" /> Choose Exercise
+        <div className="fixed inset-0 z-50 bg-black/85 backdrop-blur-md flex items-center justify-center p-4">
+          <div className="w-full max-w-lg pro-card p-6 border-slate-700 max-h-[85vh] flex flex-col shadow-2xl">
+            <div className="flex items-center justify-between pb-3.5 border-b border-slate-800">
+              <h3 className="text-base font-extrabold text-white flex items-center gap-2">
+                <Dumbbell className="w-5 h-5 text-fitrex-lime" /> Choose Exercise to Log
               </h3>
               <button
                 onClick={() => setShowExercisePicker(false)}
@@ -580,9 +653,9 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                 <button
                   key={m.id}
                   onClick={() => setPickerMuscle(m.id)}
-                  className={`px-3 py-1 rounded-lg text-xs font-semibold whitespace-nowrap transition-colors ${
+                  className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
                     pickerMuscle === m.id
-                      ? 'bg-emerald-500 text-slate-950'
+                      ? 'bg-fitrex-lime text-slate-950 font-black shadow-glow-lime'
                       : 'bg-slate-900 text-slate-400 hover:text-white'
                   }`}
                 >
@@ -599,17 +672,17 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                   <div
                     key={ex.id}
                     onClick={() => handleAddExercise(ex)}
-                    className="p-3 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-emerald-500/40 hover:bg-slate-850 cursor-pointer flex items-center justify-between transition-all group"
+                    className="p-3.5 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-fitrex-lime/40 hover:bg-slate-850 cursor-pointer flex items-center justify-between transition-all group"
                   >
                     <div>
-                      <h4 className="text-sm font-semibold text-white group-hover:text-emerald-400 transition-colors">
+                      <h4 className="text-sm font-extrabold text-white group-hover:text-fitrex-lime transition-colors">
                         {ex.name}
                       </h4>
-                      <p className="text-[11px] text-slate-400 line-clamp-1">
-                        {ex.cues?.[0] || 'Proper gym posture guide'}
+                      <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
+                        {ex.cues?.[0] || 'Standard gym movement with posture guide'}
                       </p>
                     </div>
-                    <span className="btn-secondary text-[11px] py-1 px-2.5 group-hover:bg-emerald-500 group-hover:text-slate-950 group-hover:border-emerald-500 transition-all">
+                    <span className="btn-pro-primary text-[11px] py-1 px-3">
                       Add +
                     </span>
                   </div>
@@ -626,7 +699,6 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
         onClose={() => setSelectedExerciseForModal(null)}
         onUpdateExercise={(updated) => {
           setSelectedExerciseForModal(updated);
-          // Also update in current workout exercises
           if (currentWorkout) {
             const updatedList = currentWorkout.exercises.map(e => e.id === updated.id ? { ...e, ...updated } : e);
             const wo = { ...currentWorkout, exercises: updatedList };
@@ -634,6 +706,13 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
             saveWorkout(wo, activeProfileId);
           }
         }}
+      />
+
+      {/* Plate Calculator Modal */}
+      <PlateCalculatorModal
+        isOpen={plateCalcWeight !== null}
+        onClose={() => setPlateCalcWeight(null)}
+        initialWeight={plateCalcWeight || 60}
       />
 
     </div>

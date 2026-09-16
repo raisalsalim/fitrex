@@ -1,6 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, Plus, Minus, X, Volume2, VolumeX, Maximize2, Minimize2 } from 'lucide-react';
-import { getSettings } from '../services/storage';
+import { Play, Pause, RotateCcw, X, Maximize2, Minimize2, Bell } from 'lucide-react';
 
 export default function RestTimer({
   isOpen,
@@ -14,7 +13,6 @@ export default function RestTimer({
   const [isMinimized, setIsMinimized] = useState(false);
   const audioContextRef = useRef(null);
 
-  // Play synthetic pleasant beep using Web Audio API
   const playChime = () => {
     try {
       const AudioContext = window.AudioContext || window.webkitAudioContext;
@@ -23,31 +21,29 @@ export default function RestTimer({
       audioContextRef.current = ctx;
 
       const now = ctx.currentTime;
-      // First beep
+      // High-end double chime
       const osc1 = ctx.createOscillator();
       const gain1 = ctx.createGain();
       osc1.type = 'sine';
-      osc1.frequency.setValueAtTime(880, now); // A5
+      osc1.frequency.setValueAtTime(987.77, now); // B5
       gain1.gain.setValueAtTime(0.3, now);
-      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.25);
+      gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
       osc1.connect(gain1);
       gain1.connect(ctx.destination);
       osc1.start(now);
-      osc1.stop(now + 0.25);
+      osc1.stop(now + 0.3);
 
-      // Second higher beep
       const osc2 = ctx.createOscillator();
       const gain2 = ctx.createGain();
       osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(1760, now + 0.18); // A6
-      gain2.gain.setValueAtTime(0.35, now + 0.18);
-      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.45);
+      osc2.frequency.setValueAtTime(1318.51, now + 0.15); // E6
+      gain2.gain.setValueAtTime(0.35, now + 0.15);
+      gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
       osc2.connect(gain2);
       gain2.connect(ctx.destination);
-      osc2.start(now + 0.18);
-      osc2.stop(now + 0.45);
+      osc2.start(now + 0.15);
+      osc2.stop(now + 0.5);
 
-      // Mobile vibration
       if (navigator.vibrate) {
         navigator.vibrate([200, 100, 200]);
       }
@@ -102,33 +98,31 @@ export default function RestTimer({
   return (
     <div className="fixed bottom-6 right-6 z-50 transition-all">
       {isMinimized ? (
-        /* Minimized floating pill */
         <div
           onClick={() => setIsMinimized(false)}
-          className={`flex items-center gap-3 px-4 py-2.5 rounded-full shadow-2xl cursor-pointer border backdrop-blur-md ${
+          className={`flex items-center gap-3 px-4 py-2.5 rounded-full shadow-2xl cursor-pointer border backdrop-blur-xl transition-all hover:scale-105 ${
             isRunning
-              ? 'bg-slate-900/90 border-emerald-500/50 shadow-emerald-500/20'
-              : 'bg-slate-900/90 border-slate-700'
+              ? 'bg-[#05070d]/95 border-fitrex-lime/60 shadow-glow-lime'
+              : 'bg-[#05070d]/95 border-slate-700'
           }`}
         >
-          <div className={`w-3 h-3 rounded-full ${isRunning ? 'bg-emerald-400 animate-ping' : 'bg-slate-500'}`} />
-          <span className="mono-num text-sm font-bold text-white">{formattedTime}</span>
+          <div className={`w-3 h-3 rounded-full ${isRunning ? 'bg-fitrex-lime animate-ping' : 'bg-slate-500'}`} />
+          <span className="mono-num text-sm font-black text-white">{formattedTime}</span>
           <Maximize2 className="w-3.5 h-3.5 text-slate-400 hover:text-white" />
         </div>
       ) : (
-        /* Expanded Rest Timer Card */
-        <div className="glass-card p-5 w-80 border-emerald-500/30 shadow-2xl relative bg-[#0d121f]/95 backdrop-blur-lg">
+        <div className="pro-card p-5 w-80 border-fitrex-lime/40 shadow-2xl relative bg-[#070b14]/95 backdrop-blur-2xl">
           {/* Top Bar */}
-          <div className="flex items-center justify-between mb-4">
-            <span className="text-xs font-bold uppercase tracking-wider text-emerald-400 flex items-center gap-1.5">
-              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+          <div className="flex items-center justify-between mb-3">
+            <span className="text-xs font-black uppercase tracking-wider text-fitrex-lime flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-fitrex-lime animate-ping" />
               Rest Interval
             </span>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setIsMinimized(true)}
                 className="p-1 text-slate-400 hover:text-white rounded-lg"
-                title="Minimize"
+                title="Minimize to Floating Pill"
               >
                 <Minimize2 className="w-4 h-4" />
               </button>
@@ -149,7 +143,7 @@ export default function RestTimer({
                 cx="50"
                 cy="50"
                 r="45"
-                className="text-slate-800"
+                className="text-slate-800/80"
                 strokeWidth="7"
                 stroke="currentColor"
                 fill="transparent"
@@ -158,21 +152,22 @@ export default function RestTimer({
                 cx="50"
                 cy="50"
                 r="45"
-                className="text-emerald-400 transition-all duration-500 ease-linear"
+                className="text-fitrex-lime transition-all duration-500 ease-linear"
                 strokeWidth="7"
                 strokeDasharray="283"
                 strokeDashoffset={strokeDashoffset}
                 strokeLinecap="round"
                 stroke="currentColor"
                 fill="transparent"
+                style={{ filter: 'drop-shadow(0 0 6px rgba(163, 230, 53, 0.5))' }}
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
-              <span className="text-4xl font-extrabold text-white mono-num tracking-tight">
+              <span className="text-4xl font-black text-white mono-num tracking-tight">
                 {formattedTime}
               </span>
-              <span className="text-[10px] text-slate-400 uppercase tracking-widest font-semibold mt-1">
-                {isRunning ? 'RESTING' : seconds === 0 ? 'TIME UP!' : 'PAUSED'}
+              <span className="text-[10px] text-slate-400 uppercase tracking-widest font-extrabold mt-1">
+                {isRunning ? 'RESTING' : seconds === 0 ? 'READY TO LIFT!' : 'PAUSED'}
               </span>
             </div>
           </div>
@@ -181,7 +176,7 @@ export default function RestTimer({
           <div className="flex items-center justify-center gap-3 my-4">
             <button
               onClick={() => adjustSeconds(-15)}
-              className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-bold text-xs"
+              className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-black text-xs"
               title="-15s"
             >
               -15s
@@ -189,10 +184,10 @@ export default function RestTimer({
 
             <button
               onClick={() => setIsRunning(!isRunning)}
-              className={`p-3.5 rounded-2xl font-bold flex items-center justify-center shadow-lg transition-all ${
+              className={`p-3.5 rounded-2xl font-black flex items-center justify-center shadow-lg transition-all ${
                 isRunning
-                  ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/30'
-                  : 'bg-emerald-500 hover:bg-emerald-400 text-slate-950 shadow-emerald-500/30'
+                  ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/40'
+                  : 'bg-fitrex-lime hover:bg-lime-300 text-slate-950 shadow-glow-lime'
               }`}
             >
               {isRunning ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
@@ -208,7 +203,7 @@ export default function RestTimer({
 
             <button
               onClick={() => adjustSeconds(15)}
-              className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-bold text-xs"
+              className="p-2 rounded-xl bg-slate-800/80 hover:bg-slate-700 text-slate-300 font-black text-xs"
               title="+15s"
             >
               +15s
@@ -221,10 +216,10 @@ export default function RestTimer({
               <button
                 key={sec}
                 onClick={() => setPreset(sec)}
-                className={`py-1.5 rounded-lg text-xs font-semibold transition-colors ${
+                className={`py-1.5 rounded-xl text-xs font-black transition-all ${
                   totalDuration === sec
-                    ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/40'
-                    : 'bg-slate-800/40 text-slate-400 hover:text-white'
+                    ? 'bg-fitrex-lime text-slate-950 shadow-glow-lime'
+                    : 'bg-slate-800/50 text-slate-400 hover:text-white'
                 }`}
               >
                 {sec < 60 ? `${sec}s` : `${sec / 60}m`}

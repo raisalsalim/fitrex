@@ -1,37 +1,49 @@
-/* Fitrex Core Design System */
-:root {
-  --bg-main: #080b12;
-  --bg-card: #0f1422;
-  --bg-card-hover: #151c30;
-  --bg-card-subtle: #121829;
-  --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-focus: rgba(16, 185, 129, 0.4);
-  --accent-emerald: #10b981;
-  --accent-emerald-glow: rgba(16, 185, 129, 0.25);
-  --accent-cyan: #06b6d4;
-  --accent-amber: #f59e0b;
-  --accent-rose: #f43f5e;
-  --accent-purple: #8b5cf6;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+@import "tailwindcss";
+
+@theme {
+  --color-fitrex-dark: #05070d;
+  --color-fitrex-darker: #030407;
+  --color-fitrex-surface: #0a0f1d;
+  --color-fitrex-card: #0f172a;
+  --color-fitrex-cardHover: #15203b;
+  --color-fitrex-border: rgba(255, 255, 255, 0.08);
+  --color-fitrex-lime: #a3e635;
+  --color-fitrex-limeGlow: rgba(163, 230, 53, 0.25);
+  --color-fitrex-emerald: #10b981;
+  --color-fitrex-cyan: #06b6d4;
+  --color-fitrex-amber: #f59e0b;
+  --color-fitrex-rose: #f43f5e;
+  --color-fitrex-purple: #a855f7;
+
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
 
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-  -webkit-tap-highlight-color: transparent;
+:root {
+  --bg-main: #05070d;
+  --bg-surface: #0a0f1d;
+  --bg-card: #0e1526;
+  --bg-card-hover: #141e36;
+  --border-subtle: rgba(255, 255, 255, 0.08);
+  --border-glow: rgba(163, 230, 53, 0.35);
+  --accent-lime: #a3e635;
+  --accent-emerald: #10b981;
+  --accent-cyan: #06b6d4;
+  --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
+  --font-mono: 'JetBrains Mono', monospace;
 }
 
 html, body {
   background-color: var(--bg-main);
-  color: var(--text-primary);
+  color: #f8fafc;
   font-family: var(--font-sans);
   min-height: 100vh;
   overflow-x: hidden;
+  background-image: 
+    radial-gradient(at 0% 0%, rgba(163, 230, 53, 0.05) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(6, 182, 212, 0.05) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(168, 85, 247, 0.04) 0px, transparent 50%);
+  background-attachment: fixed;
 }
 
 /* Custom Scrollbars */
@@ -40,7 +52,7 @@ html, body {
   height: 6px;
 }
 ::-webkit-scrollbar-track {
-  background: #080b12;
+  background: #05070d;
 }
 ::-webkit-scrollbar-thumb {
   background: #1e293b;
@@ -50,30 +62,46 @@ html, body {
   background: #334155;
 }
 
-/* Utilities & Glassmorphism */
-.glass-card {
-  background: var(--bg-card);
-  border: 1px solid var(--border-subtle);
-  border-radius: 16px;
-  transition: all 0.2s ease-in-out;
+/* Glassmorphic Luxury Cards */
+.pro-card {
+  background: linear-gradient(145deg, rgba(15, 22, 40, 0.9) 0%, rgba(9, 14, 26, 0.9) 100%);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 20px;
+  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  position: relative;
+  overflow: hidden;
 }
 
-.glass-card:hover {
-  border-color: rgba(255, 255, 255, 0.14);
+.pro-card::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
 }
 
-.glass-card-interactive:hover {
-  background: var(--bg-card-hover);
-  border-color: var(--border-focus);
-  box-shadow: 0 8px 25px -5px var(--accent-emerald-glow);
+.pro-card:hover {
+  border-color: rgba(255, 255, 255, 0.16);
+  box-shadow: 0 12px 35px -10px rgba(0, 0, 0, 0.5);
 }
 
-.btn-primary {
-  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
-  color: #ffffff;
-  font-weight: 600;
-  border-radius: 12px;
-  padding: 10px 18px;
+.pro-card-glow:hover {
+  border-color: rgba(163, 230, 53, 0.4);
+  box-shadow: 0 12px 35px -8px rgba(163, 230, 53, 0.15);
+}
+
+/* Buttons */
+.btn-pro-primary {
+  background: linear-gradient(135deg, #a3e635 0%, #84cc16 60%, #65a30d 100%);
+  color: #030712;
+  font-weight: 800;
+  letter-spacing: -0.01em;
+  border-radius: 14px;
+  padding: 10px 20px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -81,24 +109,24 @@ html, body {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border: none;
   cursor: pointer;
-  box-shadow: 0 4px 14px 0 rgba(16, 185, 129, 0.35);
+  box-shadow: 0 4px 20px -2px rgba(163, 230, 53, 0.4);
 }
-.btn-primary:hover {
-  filter: brightness(1.1);
-  transform: translateY(-1px);
-  box-shadow: 0 6px 20px 0 rgba(16, 185, 129, 0.45);
+.btn-pro-primary:hover {
+  filter: brightness(1.08);
+  transform: translateY(-1.5px);
+  box-shadow: 0 6px 24px -1px rgba(163, 230, 53, 0.55);
 }
-.btn-primary:active {
+.btn-pro-primary:active {
   transform: translateY(0);
 }
 
-.btn-secondary {
-  background: rgba(255, 255, 255, 0.05);
-  border: 1px solid var(--border-subtle);
-  color: var(--text-primary);
-  font-weight: 500;
-  border-radius: 12px;
-  padding: 8px 14px;
+.btn-pro-secondary {
+  background: rgba(255, 255, 255, 0.04);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  color: #f1f5f9;
+  font-weight: 700;
+  border-radius: 14px;
+  padding: 8px 16px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -106,24 +134,26 @@ html, body {
   transition: all 0.2s ease;
   cursor: pointer;
 }
-.btn-secondary:hover {
-  background: rgba(255, 255, 255, 0.1);
-  border-color: rgba(255, 255, 255, 0.2);
+.btn-pro-secondary:hover {
+  background: rgba(255, 255, 255, 0.08);
+  border-color: rgba(255, 255, 255, 0.18);
+  transform: translateY(-0.5px);
 }
 
-.input-field {
-  background: rgba(15, 20, 34, 0.8);
-  border: 1px solid var(--border-subtle);
-  border-radius: 10px;
-  color: var(--text-primary);
-  font-family: var(--font-sans);
+/* Input Fields */
+.input-pro {
+  background: rgba(10, 15, 29, 0.85);
+  border: 1px solid rgba(255, 255, 255, 0.09);
+  border-radius: 12px;
+  color: #ffffff;
   padding: 8px 12px;
   transition: all 0.2s ease;
   outline: none;
 }
-.input-field:focus {
-  border-color: var(--accent-emerald);
-  box-shadow: 0 0 0 2px var(--accent-emerald-glow);
+.input-pro:focus {
+  border-color: #a3e635;
+  box-shadow: 0 0 0 3px rgba(163, 230, 53, 0.2);
+  background: rgba(15, 23, 42, 0.95);
 }
 
 .mono-num {
@@ -131,39 +161,21 @@ html, body {
   font-variant-numeric: tabular-nums;
 }
 
-/* Badges */
-.badge-muscle {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 12px;
-  border-radius: 9999px;
-  font-size: 0.78rem;
-  font-weight: 600;
-  letter-spacing: 0.02em;
-  text-transform: uppercase;
-  border: 1px solid transparent;
-  transition: all 0.15s ease;
-  cursor: pointer;
-  user-select: none;
+.shadow-glow-lime {
+  box-shadow: 0 0 25px -5px rgba(163, 230, 53, 0.3);
+}
+.shadow-glow-cyan {
+  box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.3);
+}
+.shadow-glow-purple {
+  box-shadow: 0 0 25px -5px rgba(168, 85, 247, 0.3);
 }
 
-/* Animations */
-@keyframes pulseGlow {
-  0%, 100% { opacity: 0.6; }
-  50% { opacity: 1; }
-}
-
-.pulse-glow {
-  animation: pulseGlow 2.5s infinite;
-}
-
-@keyframes shake {
+@keyframes shakeKeypad {
   0%, 100% { transform: translateX(0); }
-  20%, 60% { transform: translateX(-6px); }
-  40%, 80% { transform: translateX(6px); }
+  20%, 60% { transform: translateX(-8px); }
+  40%, 80% { transform: translateX(8px); }
 }
-
 .shake-animation {
-  animation: shake 0.4s ease-in-out;
+  animation: shakeKeypad 0.4s ease-in-out;
 }

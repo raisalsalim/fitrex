@@ -1,6 +1,9 @@
 import React from 'react';
-import { Dumbbell, Activity, LineChart, BookOpen, Settings, Lock, Cloud, CloudOff, RefreshCw, Timer } from 'lucide-react';
-import { getActiveProfile, getGistConfig, syncWithGist } from '../services/storage';
+import { 
+  Dumbbell, Activity, LineChart, BookOpen, Settings, Lock, 
+  Cloud, CloudOff, RefreshCw, Timer, Sparkles, User, ChevronDown
+} from 'lucide-react';
+import { getActiveProfile, getGistConfig } from '../services/storage';
 
 export default function Navbar({
   currentView,
@@ -23,178 +26,188 @@ export default function Navbar({
   };
 
   return (
-    <header className="sticky top-0 z-40 bg-[#080b12]/85 backdrop-blur-md border-b border-slate-800/80 px-4 py-2.5">
-      <div className="max-w-6xl mx-auto flex items-center justify-between gap-2">
+    <header className="sticky top-0 z-40 bg-[#05070d]/90 backdrop-blur-xl border-b border-white/[0.07] px-4 py-3">
+      <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
         
-        {/* Brand & Profile */}
-        <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 cursor-pointer" onClick={() => setCurrentView('workouts')}>
-            <div className="w-9 h-9 rounded-xl bg-gradient-to-tr from-emerald-500 to-teal-400 flex items-center justify-center shadow-lg shadow-emerald-500/25">
-              <Dumbbell className="w-5 h-5 text-slate-950 font-bold -rotate-45" />
+        {/* Brand & Elite Subscription Tag */}
+        <div className="flex items-center gap-3.5">
+          <div 
+            className="flex items-center gap-2.5 cursor-pointer group" 
+            onClick={() => setCurrentView('workouts')}
+          >
+            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-fitrex-lime to-emerald-400 flex items-center justify-center shadow-glow-lime group-hover:scale-105 transition-transform">
+              <Dumbbell className="w-5 h-5 text-slate-950 font-black -rotate-45" />
             </div>
-            <div className="hidden sm:block">
-              <span className="text-base font-extrabold tracking-wider bg-gradient-to-r from-white via-slate-100 to-emerald-400 bg-clip-text text-transparent">
-                FITREX
-              </span>
-              <span className="block text-[10px] text-emerald-400 font-medium -mt-1 tracking-widest">
-                PRO GYM LOG
+            <div>
+              <div className="flex items-center gap-1.5">
+                <span className="text-lg font-black tracking-wider text-white">
+                  FITREX
+                </span>
+                <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-gradient-to-r from-amber-500/20 to-fitrex-lime/20 text-fitrex-lime border border-fitrex-lime/40 tracking-wider">
+                  PRO
+                </span>
+              </div>
+              <span className="block text-[10px] text-slate-400 font-semibold tracking-widest uppercase -mt-0.5">
+                Elite Gym Tracker
               </span>
             </div>
           </div>
 
-          {/* Profile Switcher Pill */}
+          {/* Profile Switcher */}
           <button
             onClick={onOpenProfile}
-            className="flex items-center gap-2 px-2.5 py-1 rounded-full bg-slate-900/80 border border-slate-800 hover:border-slate-700 transition-colors"
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/90 border border-slate-700/80 hover:border-fitrex-lime/50 transition-all shadow-sm"
             title="Switch User Profile"
           >
             <div
-              className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-              style={{ backgroundColor: activeProfile.color || '#10b981' }}
+              className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-slate-950 shadow-sm"
+              style={{ backgroundColor: activeProfile.color || '#a3e635' }}
             >
               {activeProfile.avatar || activeProfile.name.charAt(0).toUpperCase()}
             </div>
-            <span className="text-xs font-semibold text-slate-200 max-w-[80px] truncate">
+            <span className="text-xs font-bold text-slate-200 max-w-[80px] truncate">
               {activeProfile.name}
             </span>
+            <ChevronDown className="w-3 h-3 text-slate-400" />
           </button>
         </div>
 
-        {/* View Navigation Tabs */}
-        <nav className="hidden md:flex items-center gap-1 bg-slate-900/60 p-1 rounded-xl border border-slate-800/80">
+        {/* View Navigation Tabs - Desktop Pro Navigation */}
+        <nav className="hidden md:flex items-center gap-1 bg-slate-900/70 p-1.5 rounded-2xl border border-white/[0.08]">
           <button
             onClick={() => setCurrentView('workouts')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
               currentView === 'workouts'
-                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-gradient-to-r from-fitrex-lime to-emerald-400 text-slate-950 shadow-glow-lime'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
             }`}
           >
-            <Dumbbell className="w-3.5 h-3.5" /> Workouts
+            <Dumbbell className="w-4 h-4" /> Workouts
           </button>
 
           <button
             onClick={() => setCurrentView('analytics')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
               currentView === 'analytics'
-                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-gradient-to-r from-fitrex-lime to-emerald-400 text-slate-950 shadow-glow-lime'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
             }`}
           >
-            <LineChart className="w-3.5 h-3.5" /> Progression & PRs
+            <LineChart className="w-4 h-4" /> Analytics & PRs
           </button>
 
           <button
             onClick={() => setCurrentView('body')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
               currentView === 'body'
-                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-gradient-to-r from-fitrex-lime to-emerald-400 text-slate-950 shadow-glow-lime'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
             }`}
           >
-            <Activity className="w-3.5 h-3.5" /> Body Metrics
+            <Activity className="w-4 h-4" /> Body Stats
           </button>
 
           <button
             onClick={() => setCurrentView('library')}
-            className={`px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all flex items-center gap-1.5 ${
+            className={`px-4 py-2 rounded-xl text-xs font-bold transition-all flex items-center gap-2 ${
               currentView === 'library'
-                ? 'bg-emerald-500 text-slate-950 shadow-md shadow-emerald-500/20'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-gradient-to-r from-fitrex-lime to-emerald-400 text-slate-950 shadow-glow-lime'
+                : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
             }`}
           >
-            <BookOpen className="w-3.5 h-3.5" /> Exercise Guides
+            <BookOpen className="w-4 h-4" /> Form Guides
           </button>
         </nav>
 
-        {/* Right Tools & Utilities */}
-        <div className="flex items-center gap-1.5 sm:gap-2">
+        {/* Right Tools & Status Icons */}
+        <div className="flex items-center gap-2">
           
-          {/* Rest Timer Toggle */}
+          {/* Rest Timer Capsule */}
           <button
             onClick={onToggleTimer}
-            className={`px-2.5 py-1.5 rounded-xl border text-xs font-semibold flex items-center gap-1.5 transition-all ${
+            className={`px-3 py-1.5 rounded-xl border text-xs font-bold flex items-center gap-2 transition-all ${
               timerRunning
-                ? 'bg-amber-500/15 border-amber-500/40 text-amber-400 shadow-md shadow-amber-500/15'
-                : 'bg-slate-900/60 border-slate-800 text-slate-300 hover:border-slate-700'
+                ? 'bg-amber-500/20 border-amber-500/50 text-amber-400 shadow-lg shadow-amber-500/20'
+                : 'bg-slate-900/80 border-slate-700/80 text-slate-300 hover:border-slate-600'
             }`}
             title="Gym Rest Timer"
           >
-            <Timer className={`w-4 h-4 ${timerRunning ? 'animate-pulse' : ''}`} />
-            <span className="mono-num hidden xs:inline">{formatTimer(timerSeconds)}</span>
+            <Timer className={`w-4 h-4 ${timerRunning ? 'animate-spin' : ''}`} />
+            <span className="mono-num font-bold">{formatTimer(timerSeconds)}</span>
           </button>
 
-          {/* Gist Cloud Sync Button */}
+          {/* GitHub Gist Cloud Sync Pill */}
           <button
             onClick={onSyncGist}
-            className={`p-2 rounded-xl border text-xs flex items-center gap-1 transition-all ${
+            className={`p-2 rounded-xl border text-xs flex items-center transition-all ${
               gistConfig.token
                 ? gistConfig.syncStatus === 'syncing'
-                  ? 'bg-cyan-500/15 border-cyan-500/40 text-cyan-400'
-                  : 'bg-slate-900/60 border-slate-800 text-emerald-400 hover:border-emerald-500/40'
-                : 'bg-slate-900/60 border-slate-800 text-slate-500 hover:text-slate-300'
+                  ? 'bg-cyan-500/20 border-cyan-500/50 text-cyan-400'
+                  : 'bg-slate-900/80 border-slate-700/80 text-fitrex-lime hover:border-fitrex-lime/50'
+                : 'bg-slate-900/80 border-slate-700/80 text-slate-500 hover:text-slate-300'
             }`}
-            title={gistConfig.token ? 'GitHub Gist Sync (100% Free)' : 'Configure Free GitHub Cloud Sync in Settings'}
+            title={gistConfig.token ? 'GitHub Gist Cloud Sync Connected' : 'Free Cloud Sync Setup in Settings'}
           >
             {gistConfig.syncStatus === 'syncing' ? (
               <RefreshCw className="w-4 h-4 animate-spin text-cyan-400" />
             ) : gistConfig.token ? (
-              <Cloud className="w-4 h-4 text-emerald-400" />
+              <Cloud className="w-4 h-4 text-fitrex-lime" />
             ) : (
               <CloudOff className="w-4 h-4 text-slate-500" />
             )}
           </button>
 
-          {/* Lock Screen */}
+          {/* PIN Lock Screen Button */}
           <button
             onClick={onLockApp}
-            className="p-2 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white transition-colors"
+            className="p-2 rounded-xl bg-slate-900/80 border border-slate-700/80 hover:border-slate-600 text-slate-400 hover:text-white transition-colors"
             title="Lock Fitrex with PIN"
           >
             <Lock className="w-4 h-4" />
           </button>
 
-          {/* Settings */}
+          {/* Settings Button */}
           <button
             onClick={onOpenSettings}
-            className="p-2 rounded-xl bg-slate-900/60 border border-slate-800 hover:border-slate-700 text-slate-400 hover:text-white transition-colors"
-            title="Settings & Data Sync"
+            className="p-2 rounded-xl bg-slate-900/80 border border-slate-700/80 hover:border-slate-600 text-slate-400 hover:text-white transition-colors"
+            title="Settings & Cloud Sync"
           >
             <Settings className="w-4 h-4" />
           </button>
         </div>
+
       </div>
 
-      {/* Mobile Subnav */}
-      <div className="md:hidden flex items-center justify-around pt-2 mt-2 border-t border-slate-800/60">
+      {/* Mobile Bottom Navigation Bar (App Dock) */}
+      <div className="md:hidden flex items-center justify-around pt-2.5 mt-2.5 border-t border-white/[0.06]">
         <button
           onClick={() => setCurrentView('workouts')}
-          className={`flex flex-col items-center gap-0.5 text-[11px] font-medium ${
-            currentView === 'workouts' ? 'text-emerald-400' : 'text-slate-400'
+          className={`flex flex-col items-center gap-1 text-[11px] font-bold ${
+            currentView === 'workouts' ? 'text-fitrex-lime' : 'text-slate-400'
           }`}
         >
           <Dumbbell className="w-4 h-4" /> Workouts
         </button>
         <button
           onClick={() => setCurrentView('analytics')}
-          className={`flex flex-col items-center gap-0.5 text-[11px] font-medium ${
-            currentView === 'analytics' ? 'text-emerald-400' : 'text-slate-400'
+          className={`flex flex-col items-center gap-1 text-[11px] font-bold ${
+            currentView === 'analytics' ? 'text-fitrex-lime' : 'text-slate-400'
           }`}
         >
           <LineChart className="w-4 h-4" /> Progress
         </button>
         <button
           onClick={() => setCurrentView('body')}
-          className={`flex flex-col items-center gap-0.5 text-[11px] font-medium ${
-            currentView === 'body' ? 'text-emerald-400' : 'text-slate-400'
+          className={`flex flex-col items-center gap-1 text-[11px] font-bold ${
+            currentView === 'body' ? 'text-fitrex-lime' : 'text-slate-400'
           }`}
         >
           <Activity className="w-4 h-4" /> Body
         </button>
         <button
           onClick={() => setCurrentView('library')}
-          className={`flex flex-col items-center gap-0.5 text-[11px] font-medium ${
-            currentView === 'library' ? 'text-emerald-400' : 'text-slate-400'
+          className={`flex flex-col items-center gap-1 text-[11px] font-bold ${
+            currentView === 'library' ? 'text-fitrex-lime' : 'text-slate-400'
           }`}
         >
           <BookOpen className="w-4 h-4" /> Guides
