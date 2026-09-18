@@ -118,7 +118,7 @@ export default function App() {
       {/* Security PIN Lock Screen & First-Time Login */}
       <PinLockModal
         isOpen={isLocked || showPinSetup}
-        isFirstTime={!getAuthenticatedProfileId()}
+        isFirstTime={getProfiles().length === 0}
         onUnlock={handleUnlockApp}
       />
 

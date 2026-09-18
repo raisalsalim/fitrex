@@ -11,9 +11,8 @@ export default function PinLockModal({ isOpen, onUnlock }) {
 
   // Mode: 'onboarding' (ask username & pin) | 'unlock' (locked PIN keypad)
   const [mode, setMode] = useState(() => {
-    const auth = getAuthenticatedProfileId();
     const profs = getProfiles();
-    if (!auth || profs.length === 0) return 'onboarding';
+    if (profs.length === 0) return 'onboarding';
     return 'unlock';
   });
 
@@ -31,18 +30,18 @@ export default function PinLockModal({ isOpen, onUnlock }) {
   const [recoveryInput, setRecoveryInput] = useState('');
 
   useEffect(() => {
-    const currentAuth = getAuthenticatedProfileId();
     const currentProfs = getProfiles();
     setProfiles(currentProfs);
+    const currentAuth = getAuthenticatedProfileId();
     
-    if (!currentAuth || currentProfs.length === 0) {
+    if (currentProfs.length === 0) {
       setMode('onboarding');
       setUserName('');
       setSetupPin('');
       setConfirmPin('');
     } else {
       setMode('unlock');
-      setSelectedProfileId(activeProfile?.id || currentProfs[0]?.id || '');
+      setSelectedProfileId(currentAuth || activeProfile?.id || currentProfs[0]?.id || '');
     }
     setUnlockPin('');
     setError('');

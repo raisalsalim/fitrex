@@ -89,15 +89,22 @@ export function getProfileById(id) {
 
 // Session authentication persistence across mobile screen lock & browser refreshes
 export function getAuthenticatedProfileId() {
-  return localStorage.getItem(STORAGE_KEYS.AUTH_SESSION) || null;
+  const auth = localStorage.getItem(STORAGE_KEYS.AUTH_SESSION);
+  if (auth) return auth;
+  const profiles = getProfiles();
+  if (profiles.length > 0) {
+    const active = getActiveProfileId() || profiles[0].id;
+    localStorage.setItem(STORAGE_KEYS.AUTH_SESSION, active);
+    return active;
+  }
+  return null;
 }
 
 export function isAppLocked() {
-  const authId = getAuthenticatedProfileId();
   const profiles = getProfiles();
-  // If no profiles exist at all or user hasn't created one yet, lock to onboarding/login
-  if (!authId || profiles.length === 0) return true;
-  // If user explicitly clicked the Lock button
+  // If no profiles exist at all, prompt for initial onboarding/creation
+  if (profiles.length === 0) return true;
+  // If user explicitly clicked the Lock button in navbar
   return localStorage.getItem(STORAGE_KEYS.IS_LOCKED) === 'true';
 }
 
@@ -153,6 +160,7 @@ export function loginOrRegisterProfile({ name, pin, color = '#ef4444' }) {
   }
 
   unlockSession(target.id);
+  triggerAutoGistSync();
   return target;
 }
 
@@ -387,11 +395,38 @@ export function exportAllDataPackage() {
 
 // Import data package and merge
 export function importDataPackage(pkg) {
-  if (!pkg || !pkg.profiles) {
+  if (!pkg) {
     throw new Error('Invalid Fitrex backup format');
   }
 
-  saveProfiles(pkg.profiles);
+  // Smartly merge profiles so local user profiles are NEVER overwritten by empty cloud backups
+  const existingProfiles = getProfiles();
+  const incomingProfiles = Array.isArray(pkg.profiles) ? pkg.profiles : [];
+  const mergedProfilesMap = new Map();
+
+  existingProfiles.forEach(p => {
+    if (p && p.id) mergedProfilesMap.set(p.id, p);
+  });
+
+  incomingProfiles.forEach(p => {
+    if (p && p.id) {
+      const current = mergedProfilesMap.get(p.id);
+      if (!current) {
+        mergedProfilesMap.set(p.id, p);
+      } else {
+        mergedProfilesMap.set(p.id, {
+          ...p,
+          pinHash: p.pinHash || current.pinHash,
+          name: p.name || current.name
+        });
+      }
+    }
+  });
+
+  const finalProfiles = Array.from(mergedProfilesMap.values());
+  if (finalProfiles.length > 0) {
+    saveProfiles(finalProfiles);
+  }
   if (pkg.activeProfileId) setActiveProfileId(pkg.activeProfileId);
   if (pkg.settings) saveSettings(pkg.settings);
   if (pkg.customExercises) safeSet(STORAGE_KEYS.CUSTOM_EXERCISES, pkg.customExercises);
