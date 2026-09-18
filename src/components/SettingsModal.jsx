@@ -104,7 +104,7 @@ export default function SettingsModal({ isOpen, onClose, onRequirePinSetup }) {
         </button>
 
         <div className="flex items-center gap-2.5 mb-5">
-          <div className="w-9 h-9 rounded-xl bg-emerald-500/10 border border-emerald-500/30 flex items-center justify-center text-emerald-400 font-bold">
+          <div className="w-9 h-9 rounded-xl bg-fitrex-red/10 border border-fitrex-red/30 flex items-center justify-center text-fitrex-red font-bold">
             ⚡
           </div>
           <div>
@@ -118,7 +118,7 @@ export default function SettingsModal({ isOpen, onClose, onRequirePinSetup }) {
           <button
             onClick={() => setActiveTab('sync')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-              activeTab === 'sync' ? 'bg-emerald-500 text-slate-950' : 'text-slate-400 hover:text-white'
+              activeTab === 'sync' ? 'bg-fitrex-red text-white shadow-glow-red' : 'text-slate-400 hover:text-white'
             }`}
           >
             <Cloud className="w-3.5 h-3.5" /> 100% Free Cloud Sync
@@ -126,7 +126,7 @@ export default function SettingsModal({ isOpen, onClose, onRequirePinSetup }) {
           <button
             onClick={() => setActiveTab('security')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-              activeTab === 'security' ? 'bg-emerald-500 text-slate-950' : 'text-slate-400 hover:text-white'
+              activeTab === 'security' ? 'bg-fitrex-red text-white shadow-glow-red' : 'text-slate-400 hover:text-white'
             }`}
           >
             <Lock className="w-3.5 h-3.5" /> PIN Security
@@ -134,7 +134,7 @@ export default function SettingsModal({ isOpen, onClose, onRequirePinSetup }) {
           <button
             onClick={() => setActiveTab('backup')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-              activeTab === 'backup' ? 'bg-emerald-500 text-slate-950' : 'text-slate-400 hover:text-white'
+              activeTab === 'backup' ? 'bg-fitrex-red text-white shadow-glow-red' : 'text-slate-400 hover:text-white'
             }`}
           >
             <Download className="w-3.5 h-3.5" /> Backup & Units
@@ -142,7 +142,7 @@ export default function SettingsModal({ isOpen, onClose, onRequirePinSetup }) {
           <button
             onClick={() => setActiveTab('deploy')}
             className={`px-3 py-1.5 rounded-lg text-xs font-semibold transition-colors flex items-center gap-1.5 ${
-              activeTab === 'deploy' ? 'bg-emerald-500 text-slate-950' : 'text-slate-400 hover:text-white'
+              activeTab === 'deploy' ? 'bg-fitrex-red text-white shadow-glow-red' : 'text-slate-400 hover:text-white'
             }`}
           >
             🚀 GitHub Deploy
@@ -153,7 +153,7 @@ export default function SettingsModal({ isOpen, onClose, onRequirePinSetup }) {
         {activeTab === 'sync' && (
           <div className="space-y-4">
             <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
-              <div className="flex items-center gap-2 text-xs font-bold text-emerald-400 uppercase tracking-wider">
+              <div className="flex items-center gap-2 text-xs font-bold text-fitrex-red uppercase tracking-wider">
                 <Smartphone className="w-4 h-4" /> ↔ <Laptop className="w-4 h-4" /> Sync Between Phone & Laptop
               </div>
               <p className="text-xs text-slate-300 leading-relaxed">
@@ -162,14 +162,14 @@ export default function SettingsModal({ isOpen, onClose, onRequirePinSetup }) {
             </div>
 
             {/* How to generate token */}
-            <div className="p-3.5 rounded-xl bg-emerald-500/5 border border-emerald-500/20 text-xs text-slate-300 space-y-1.5">
+            <div className="p-3.5 rounded-xl bg-fitrex-red/5 border border-fitrex-red/20 text-xs text-slate-300 space-y-1.5">
               <div className="font-bold text-white flex items-center justify-between">
                 <span>How to connect in 1 minute:</span>
                 <a
                   href="https://github.com/settings/tokens/new?description=Fitrex+Sync&scopes=gist"
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="text-emerald-400 hover:underline flex items-center gap-1 text-[11px]"
+                  className="text-fitrex-red hover:underline flex items-center gap-1 text-[11px]"
                 >
                   Generate Token on GitHub <ExternalLink className="w-3 h-3" />
                 </a>
@@ -189,7 +189,7 @@ export default function SettingsModal({ isOpen, onClose, onRequirePinSetup }) {
                 placeholder="ghp_xxxxxxxxxxxxxxxxxxxx"
                 value={tokenInput}
                 onChange={e => setTokenInput(e.target.value)}
-                className="w-full input-field text-xs py-2.5 font-mono"
+                className="w-full input-pro text-xs py-2.5 font-mono"
               />
             </div>
 
@@ -199,7 +199,7 @@ export default function SettingsModal({ isOpen, onClose, onRequirePinSetup }) {
                 type="checkbox"
                 checked={autoSync}
                 onChange={e => setAutoSync(e.target.checked)}
-                className="rounded accent-emerald-500"
+                className="rounded accent-fitrex-red"
               />
               Auto-sync workouts to GitHub Gist when saved
             </label>
@@ -208,7 +208,7 @@ export default function SettingsModal({ isOpen, onClose, onRequirePinSetup }) {
             {syncFeedback && (
               <div className={`p-3 rounded-xl text-xs flex items-center gap-2 ${
                 syncFeedback.type === 'success'
-                  ? 'bg-emerald-500/10 text-emerald-300 border border-emerald-500/30'
+                  ? 'bg-fitrex-red/10 text-fitrex-red border border-fitrex-red/30'
                   : 'bg-rose-500/10 text-rose-300 border border-rose-500/30'
               }`}>
                 {syncFeedback.type === 'success' ? <Check className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
@@ -249,7 +249,7 @@ export default function SettingsModal({ isOpen, onClose, onRequirePinSetup }) {
                   className={`px-3 py-1.5 rounded-lg text-xs font-semibold ${
                     pinConfig.enabled
                       ? 'bg-rose-500/20 text-rose-300 border border-rose-500/40'
-                      : 'bg-emerald-500 text-slate-950 font-bold'
+                      : 'bg-fitrex-red text-white shadow-glow-red font-bold'
                   }`}
                 >
                   {pinConfig.enabled ? 'Disable PIN' : 'Set Up PIN'}
@@ -259,7 +259,7 @@ export default function SettingsModal({ isOpen, onClose, onRequirePinSetup }) {
 
             {pinConfig.enabled && (
               <div className="p-4 rounded-xl bg-slate-900/40 border border-slate-800 space-y-3">
-                <span className="text-xs font-semibold text-emerald-400 flex items-center gap-1.5">
+                <span className="text-xs font-semibold text-fitrex-red flex items-center gap-1.5">
                   <Check className="w-4 h-4" /> PIN Security is Active
                 </span>
                 <p className="text-xs text-slate-400">
@@ -292,7 +292,7 @@ export default function SettingsModal({ isOpen, onClose, onRequirePinSetup }) {
                 <button
                   onClick={() => handleUnitChange('kg')}
                   className={`px-3 py-1 rounded-lg text-xs font-bold ${
-                    settings.unit === 'kg' ? 'bg-emerald-500 text-slate-950' : 'text-slate-400'
+                    settings.unit === 'kg' ? 'bg-fitrex-red text-white shadow-glow-red' : 'text-slate-400'
                   }`}
                 >
                   KG
@@ -300,7 +300,7 @@ export default function SettingsModal({ isOpen, onClose, onRequirePinSetup }) {
                 <button
                   onClick={() => handleUnitChange('lbs')}
                   className={`px-3 py-1 rounded-lg text-xs font-bold ${
-                    settings.unit === 'lbs' ? 'bg-emerald-500 text-slate-950' : 'text-slate-400'
+                    settings.unit === 'lbs' ? 'bg-fitrex-red text-white shadow-glow-red' : 'text-slate-400'
                   }`}
                 >
                   LBS
@@ -320,7 +320,7 @@ export default function SettingsModal({ isOpen, onClose, onRequirePinSetup }) {
                   onClick={handleExportBackup}
                   className="btn-secondary flex-1 text-xs py-2 flex items-center justify-center gap-1.5"
                 >
-                  <Download className="w-3.5 h-3.5 text-emerald-400" /> Export Backup
+                  <Download className="w-3.5 h-3.5 text-fitrex-red" /> Export Backup
                 </button>
 
                 <label className="btn-secondary flex-1 text-xs py-2 flex items-center justify-center gap-1.5 cursor-pointer">
@@ -336,7 +336,7 @@ export default function SettingsModal({ isOpen, onClose, onRequirePinSetup }) {
         {activeTab === 'deploy' && (
           <div className="space-y-3 text-xs text-slate-300">
             <div className="bg-slate-900/60 p-4 rounded-xl border border-slate-800 space-y-2">
-              <h4 className="text-sm font-bold text-emerald-400 flex items-center gap-1.5">
+              <h4 className="text-sm font-bold text-fitrex-red flex items-center gap-1.5">
                 🚀 How to Deploy 100% Free to GitHub Pages
               </h4>
               <p className="text-slate-400">
@@ -346,7 +346,7 @@ export default function SettingsModal({ isOpen, onClose, onRequirePinSetup }) {
 
             <ol className="space-y-2.5 pl-4 list-decimal text-slate-300">
               <li>
-                <strong>Create a new GitHub Repository</strong> on <a href="https://github.com/new" target="_blank" rel="noopener noreferrer" className="text-emerald-400 underline">github.com/new</a> (e.g. named <code>fitrex</code>).
+                <strong>Create a new GitHub Repository</strong> on <a href="https://github.com/new" target="_blank" rel="noopener noreferrer" className="text-fitrex-red underline">github.com/new</a> (e.g. named <code>fitrex</code>).
               </li>
               <li>
                 <strong>Push your code</strong> to GitHub:
