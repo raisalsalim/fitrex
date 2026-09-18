@@ -107,22 +107,22 @@ export default function WorkoutHero({ currentWorkout, unit = 'kg', activeProfile
   const sessionTitle = activeProfile?.name ? `${activeProfile.name}'s Workout Session` : "Today's Training Session";
 
   return (
-    <div className="pro-card p-5 sm:p-6 border-slate-800/90 mb-6 bg-gradient-to-r from-[#0b101f] to-[#070a14] shadow-2xl relative overflow-hidden">
+    <div className="pro-card p-4 sm:p-6 border-slate-800/90 mb-4 sm:mb-6 bg-gradient-to-r from-[#0b101f] to-[#070a14] shadow-2xl relative overflow-hidden">
       
       {/* Subtle red ambient glow */}
       <div className="absolute -top-20 -right-20 w-56 h-56 bg-fitrex-red/10 rounded-full blur-3xl pointer-events-none" />
 
-      <div className="flex flex-col md:flex-row items-center justify-between gap-5 relative z-10">
+      <div className="flex flex-col sm:flex-row items-center justify-between gap-4 relative z-10">
         
         {/* Left: User-Specific Title & Status */}
-        <div className="text-center md:text-left space-y-1.5">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-fitrex-red/15 border border-fitrex-red/30 text-fitrex-red text-xs font-black shadow-glow-red-sm">
-            <Flame className="w-3.5 h-3.5 fill-current animate-pulse" /> Workout Session
+        <div className="text-center sm:text-left space-y-1 w-full sm:w-auto">
+          <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full bg-fitrex-red/15 border border-fitrex-red/30 text-fitrex-red text-[11px] font-black shadow-glow-red-sm">
+            <Flame className="w-3 h-3 fill-current animate-pulse" /> Workout Session
           </div>
-          <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-2.5 justify-center md:justify-start">
+          <h2 className="text-xl sm:text-2xl font-black text-white tracking-tight flex items-center gap-2 justify-center sm:justify-start">
             {sessionTitle}
           </h2>
-          <p className="text-xs text-slate-400">
+          <p className="text-[11px] sm:text-xs text-slate-400">
             {exercises.length === 0 
               ? 'Select your target muscles or pick a saved template below to begin.'
               : `${exercises.length} movements active for this session.`}
@@ -130,39 +130,41 @@ export default function WorkoutHero({ currentWorkout, unit = 'kg', activeProfile
         </div>
 
         {/* Center/Right: Persistent Workout Timer */}
-        <div className="flex items-center gap-3 bg-[#050811]/90 p-3 sm:px-4 sm:py-3 rounded-2xl border border-slate-800 shadow-inner">
-          <div className="text-right pr-2">
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
+        <div className="flex items-center justify-between sm:justify-end gap-2.5 sm:gap-3 bg-[#050811]/90 p-2.5 sm:px-4 sm:py-3 rounded-2xl border border-slate-800 shadow-inner w-full sm:w-auto">
+          <div className="text-left sm:text-right pr-1 sm:pr-2">
+            <span className="text-[9px] sm:text-[10px] font-bold text-slate-400 uppercase tracking-wider block">
               Session Duration
             </span>
-            <span className="text-2xl sm:text-3xl font-black text-white mono-num">
+            <span className="text-xl sm:text-3xl font-black text-white mono-num">
               {formatTime(displaySeconds)}
             </span>
           </div>
 
-          <button
-            type="button"
-            onClick={handleToggleRunning}
-            className={`px-4 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 transition-all shadow-lg ${
-              timerState.isRunning
-                ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/30'
-                : 'btn-pro-primary shadow-glow-red'
-            }`}
-          >
-            {timerState.isRunning ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
-            <span>{timerState.isRunning ? 'Pause' : displaySeconds > 0 ? 'Resume' : 'Start Workout'}</span>
-          </button>
-
-          {displaySeconds > 0 && (
+          <div className="flex items-center gap-1.5 sm:gap-2">
             <button
               type="button"
-              onClick={handleReset}
-              className="p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
-              title="Reset Session Timer"
+              onClick={handleToggleRunning}
+              className={`px-3 sm:px-4 py-2 sm:py-2.5 rounded-xl font-black text-xs flex items-center gap-1.5 transition-all shadow-lg ${
+                timerState.isRunning
+                  ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/30'
+                  : 'btn-pro-primary shadow-glow-red'
+              }`}
             >
-              <RotateCcw className="w-4 h-4" />
+              {timerState.isRunning ? <Pause className="w-3.5 h-3.5 fill-current" /> : <Play className="w-3.5 h-3.5 fill-current ml-0.5" />}
+              <span>{timerState.isRunning ? 'Pause' : displaySeconds > 0 ? 'Resume' : 'Start'}</span>
             </button>
-          )}
+
+            {displaySeconds > 0 && (
+              <button
+                type="button"
+                onClick={handleReset}
+                className="p-2 sm:p-2.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-slate-400 hover:text-white transition-colors"
+                title="Reset Session Timer"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
         </div>
 
       </div>

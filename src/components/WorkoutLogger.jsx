@@ -507,7 +507,7 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
   });
 
   return (
-    <div className="space-y-6 pb-24 max-w-3xl mx-auto">
+    <div className="space-y-4 sm:space-y-6 pb-24 max-w-3xl mx-auto w-full overflow-x-hidden">
       
       {/* 1. Hero with Persistent Session Stopwatch */}
       <WorkoutHero 
@@ -518,7 +518,7 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
       />
 
       {/* 2. Date Switcher */}
-      <div className="flex items-center justify-between bg-slate-900/70 p-3 rounded-2xl border border-slate-800 shadow-sm">
+      <div className="flex items-center justify-between bg-slate-900/70 p-2 sm:p-3 rounded-2xl border border-slate-800 shadow-sm">
         <button
           onClick={() => changeDate(-1)}
           className="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-800 transition-colors"
@@ -550,7 +550,7 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
       </div>
 
       {/* 3. Target Muscles Selection */}
-      <div className="pro-card p-4 sm:p-5 border-slate-800">
+      <div className="pro-card p-3 sm:p-5 border-slate-800">
         <span className="text-xs font-black uppercase text-slate-300 block mb-3">
           1. Choose Muscles to Train Today
         </span>
@@ -575,7 +575,7 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
       </div>
 
       {/* 4. Quick Saved Workout Templates Bar */}
-      <div className="pro-card p-4 sm:p-5 border-slate-800 space-y-3 bg-[#080c16]">
+      <div className="pro-card p-3 sm:p-5 border-slate-800 space-y-2.5 sm:space-y-3 bg-[#080c16]">
         <div className="flex items-center justify-between">
           <span className="text-xs font-black uppercase text-slate-300 flex items-center gap-1.5">
             <Bookmark className="w-3.5 h-3.5 text-fitrex-red" /> 2. Quick Load Workout Template
@@ -609,10 +609,10 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
 
       {/* 5. Logged Exercises Section */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between gap-2 flex-wrap">
-          <div className="flex items-center gap-2.5">
-            <span className="text-xs font-black uppercase text-slate-300">
-              3. Exercises & Sets ({exercisesList.length})
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 sm:gap-2.5 min-w-0">
+            <span className="text-xs font-black uppercase text-slate-300 truncate">
+              3. Exercises ({exercisesList.length})
             </span>
 
             {/* Expand All / Collapse All Toggle Button */}
@@ -620,20 +620,20 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
               <button
                 type="button"
                 onClick={handleToggleExpandAll}
-                className="text-[11px] font-black px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700/80 text-fitrex-red hover:bg-fitrex-red hover:text-white transition-all flex items-center gap-1 shadow-sm"
+                className="text-[10px] sm:text-[11px] font-black px-2 sm:px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700/80 text-fitrex-red hover:bg-fitrex-red hover:text-white transition-all flex items-center gap-1 shadow-sm shrink-0"
                 title={areAllExpanded ? 'Group all exercises into compact rows' : 'Expand all exercises and sets'}
               >
-                <ChevronsUpDown className="w-3.5 h-3.5" />
-                <span>{areAllExpanded ? 'Collapse All' : 'Expand All'}</span>
+                <ChevronsUpDown className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                <span>{areAllExpanded ? 'Collapse' : 'Expand'}</span>
               </button>
             )}
           </div>
 
           <button
             onClick={() => { setPickerSearch(''); setShowPicker(true); }}
-            className="btn-pro-primary text-xs py-2 px-3.5 flex items-center gap-1.5 shadow-glow-red"
+            className="btn-pro-primary text-xs py-1.5 sm:py-2 px-2.5 sm:px-3.5 flex items-center gap-1 sm:gap-1.5 shadow-glow-red shrink-0"
           >
-            <Plus className="w-4 h-4" /> Add Exercise
+            <Plus className="w-3.5 h-3.5 sm:w-4 sm:h-4" /> <span>Add Exercise</span>
           </button>
         </div>
 
@@ -671,35 +671,35 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
             return (
               <div 
                 key={exLog.id} 
-                className={`pro-card p-4 sm:p-5 border transition-all ${
+                className={`pro-card p-2.5 sm:p-4 border transition-all ${
                   isExpanded ? 'border-slate-800 bg-[#0a0f1d]' : 'border-slate-800/80 bg-slate-950/70 hover:border-slate-700'
-                } space-y-3.5`}
+                } space-y-2.5 sm:space-y-3.5`}
               >
                 
                 {/* Exercise Header */}
-                <div className="flex items-center justify-between gap-3">
+                <div className="flex items-center justify-between gap-1.5 sm:gap-3">
                   <div 
                     onClick={() => toggleExpandExercise(exLog.id)}
-                    className="flex items-center gap-2.5 cursor-pointer select-none flex-1 min-w-0"
+                    className="flex items-center gap-1.5 sm:gap-2.5 cursor-pointer select-none flex-1 min-w-0"
                     title={isExpanded ? 'Click to collapse/group' : 'Click to expand sets'}
                   >
-                    <div className="w-9 h-9 rounded-xl bg-fitrex-red/15 border border-fitrex-red/40 flex items-center justify-center text-fitrex-red shrink-0">
-                      <Dumbbell className="w-4 h-4" />
+                    <div className="w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl bg-fitrex-red/15 border border-fitrex-red/40 flex items-center justify-center text-fitrex-red shrink-0">
+                      <Dumbbell className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </div>
-                    <div className="min-w-0">
-                      <h4 className="text-sm sm:text-base font-black text-white flex items-center gap-2 truncate">
-                        {exLog.name}
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 uppercase shrink-0">
+                    <div className="min-w-0 flex-1">
+                      <h4 className="text-xs sm:text-base font-black text-white flex items-center gap-1 sm:gap-2 truncate">
+                        <span className="truncate">{exLog.name}</span>
+                        <span className="text-[9px] sm:text-[10px] font-bold px-1 sm:px-1.5 py-0.2 sm:py-0.5 rounded-full bg-slate-800 text-slate-300 uppercase shrink-0">
                           {exLog.muscle}
                         </span>
                       </h4>
                       
                       <div className="flex items-center gap-2 mt-0.5">
-                        <span className="text-[11px] text-slate-400 font-semibold">
-                          {completedSetsCount}/{totalSetsCount} sets completed
+                        <span className="text-[10px] sm:text-[11px] text-slate-400 font-semibold">
+                          {completedSetsCount}/{totalSetsCount} done
                         </span>
                         {personalRecords[exLog.name]?.maxWeight > 0 && (
-                          <span className="text-[10px] text-amber-400 font-bold hidden sm:inline-flex items-center gap-1">
+                          <span className="text-[9px] sm:text-[10px] text-amber-400 font-bold hidden sm:inline-flex items-center gap-1">
                             <Flame className="w-3 h-3 fill-current" /> PR: {personalRecords[exLog.name].maxWeight} {personalRecords[exLog.name].unit || unit}
                           </span>
                         )}
@@ -707,14 +707,14 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                     
                     {/* Weight Unit Selector: KG vs BLOCKS */}
                     <div className="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800" title="Switch weight unit between KG and Number of Blocks / Pin Stack">
                       <button
                         type="button"
                         onClick={() => handleToggleExWeightUnit(exLog.id, 'kg')}
-                        className={`px-2 py-1 rounded text-[10px] font-black transition-all ${
+                        className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[9px] sm:text-[10px] font-black transition-all ${
                           exUnit === 'kg'
                             ? 'bg-fitrex-red text-white shadow-glow-red'
                             : 'text-slate-400 hover:text-white'
@@ -725,13 +725,13 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                       <button
                         type="button"
                         onClick={() => handleToggleExWeightUnit(exLog.id, 'blocks')}
-                        className={`px-2 py-1 rounded text-[10px] font-black transition-all ${
+                        className={`px-1.5 sm:px-2 py-0.5 sm:py-1 rounded text-[9px] sm:text-[10px] font-black transition-all ${
                           exUnit === 'blocks'
                             ? 'bg-fitrex-red text-white shadow-glow-red'
                             : 'text-slate-400 hover:text-white'
                         }`}
                       >
-                        BLOCKS
+                        BLK
                       </button>
                     </div>
 
@@ -739,17 +739,17 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                     <button
                       type="button"
                       onClick={() => setSelectedExerciseForModal(exLog)}
-                      className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-fitrex-red hover:text-white hover:border-fitrex-red transition-colors"
+                      className="p-1 sm:p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-fitrex-red hover:text-white hover:border-fitrex-red transition-colors"
                       title="Posture & Video Guide"
                     >
-                      <Video className="w-4 h-4" />
+                      <Video className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
 
                     {/* Individual Exercise Group / Expand Toggle Button */}
                     <button
                       type="button"
                       onClick={() => toggleExpandExercise(exLog.id)}
-                      className={`px-2 py-1.5 rounded-lg border text-xs font-black flex items-center gap-1 transition-all ${
+                      className={`px-1.5 sm:px-2 py-1 sm:py-1.5 rounded-lg border text-[11px] sm:text-xs font-black flex items-center gap-0.5 sm:gap-1 transition-all ${
                         isExpanded
                           ? 'bg-slate-800 hover:bg-slate-700 text-white border-slate-700'
                           : 'bg-fitrex-red/15 text-fitrex-red border-fitrex-red/40 hover:bg-fitrex-red hover:text-white'
@@ -758,13 +758,13 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                     >
                       {isExpanded ? (
                         <>
-                          <ChevronUp className="w-3.5 h-3.5" />
-                          <span className="text-[11px] font-black">Group</span>
+                          <ChevronUp className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                          <span className="text-[10px] sm:text-[11px] font-black">Group</span>
                         </>
                       ) : (
                         <>
-                          <ChevronDown className="w-3.5 h-3.5" />
-                          <span className="text-[11px] font-black">Expand</span>
+                          <ChevronDown className="w-3 h-3 sm:w-3.5 sm:h-3.5" />
+                          <span className="text-[10px] sm:text-[11px] font-black">Expand</span>
                         </>
                       )}
                     </button>
@@ -773,21 +773,21 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                     <button
                       type="button"
                       onClick={() => handleRemoveExercise(exLog.id)}
-                      className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-500 hover:text-rose-400 transition-colors"
+                      className="p-1 sm:p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-500 hover:text-rose-400 transition-colors"
                       title="Remove Exercise"
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-3.5 h-3.5 sm:w-4 sm:h-4" />
                     </button>
                   </div>
                 </div>
 
                 {/* COLLAPSED / GROUPED VIEW: Compact Summary Pill Row */}
                 {!isExpanded ? (
-                  <div className="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+                  <div className="bg-slate-950/80 p-2 sm:p-2.5 rounded-xl border border-slate-800/80 flex items-center gap-1 sm:gap-1.5 overflow-x-auto no-scrollbar py-1">
                     {(exLog.sets || []).map((s) => (
                       <span
                         key={s.id}
-                        className={`text-[10px] font-black px-2.5 py-0.5 rounded-lg border whitespace-nowrap ${
+                        className={`text-[10px] font-black px-2 py-0.5 rounded-lg border whitespace-nowrap ${
                           s.completed
                             ? 'bg-fitrex-red/15 text-fitrex-red border-fitrex-red/40 shadow-glow-red-sm'
                             : 'bg-slate-900 text-slate-400 border-slate-800'
@@ -798,8 +798,8 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                     ))}
                   </div>
                 ) : (
-                  /* EXPANDED VIEW: Detailed Sets Table */
-                  <div className="space-y-2.5 pt-1">
+                  /* EXPANDED VIEW: Detailed Sets Table - Auto Adjusts to Mobile Viewports */
+                  <div className="space-y-2 pt-1">
                     {(exLog.sets || []).map((set) => {
                       const liveSeconds = getLiveSetSeconds(set);
                       const isRunning = Boolean(set.timerRunning);
@@ -809,7 +809,7 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                       return (
                         <div
                           key={set.id}
-                          className={`p-3 rounded-xl border flex items-center justify-between gap-2 sm:gap-4 transition-all ${
+                          className={`p-1.5 sm:p-3 rounded-xl border flex items-center justify-between gap-1 sm:gap-3 transition-all ${
                             set.completed
                               ? 'bg-fitrex-red/[0.08] border-fitrex-red/40'
                               : isRunning
@@ -818,23 +818,23 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                           }`}
                         >
                           {/* Set # */}
-                          <div className="w-7 h-7 rounded-lg bg-slate-800 text-slate-300 text-xs font-black flex items-center justify-center shrink-0">
+                          <div className="w-5 h-5 sm:w-7 sm:h-7 rounded-md sm:rounded-lg bg-slate-800 text-slate-300 text-[10px] sm:text-xs font-black flex items-center justify-center shrink-0">
                             {set.setNum}
                           </div>
 
                           {/* Weight (kg or Blocks) */}
-                          <div className="flex-1 min-w-[85px] sm:min-w-[110px]">
+                          <div className="flex-1 min-w-[56px] sm:min-w-[100px]">
                             <div className="flex items-center justify-between mb-0.5">
-                              <label className="text-[10px] text-slate-400 font-bold uppercase block">
-                                {isBlocks ? 'Blocks / Pin' : `Weight (${unit})`}
+                              <label className="text-[8px] sm:text-[10px] text-slate-400 font-bold uppercase truncate">
+                                {isBlocks ? 'Blk' : `Wt`}
                               </label>
                               <button
                                 type="button"
                                 onClick={() => handleToggleSetWeightUnit(exLog.id, set.id)}
-                                className="text-[9px] font-black px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-fitrex-red border border-slate-700 leading-none"
+                                className="text-[8px] sm:text-[9px] font-black px-1 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-fitrex-red border border-slate-700 leading-none"
                                 title="Click to switch between kg and weight blocks"
                               >
-                                {isBlocks ? 'Blocks' : 'kg'}
+                                {isBlocks ? 'blk' : 'kg'}
                               </button>
                             </div>
                             
@@ -843,38 +843,38 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                               step={isBlocks ? '1' : '0.5'}
                               value={set.weight}
                               onChange={e => handleSetChange(exLog.id, set.id, 'weight', e.target.value)}
-                              placeholder={isBlocks ? 'e.g. 8' : '40'}
-                              className="w-full input-pro py-1 px-2 text-center text-sm font-black mono-num"
+                              placeholder={isBlocks ? '8' : '40'}
+                              className="w-full input-pro py-1 px-1 sm:px-2 text-center text-xs sm:text-sm font-black mono-num"
                             />
                             {set.previous && (
-                              <span className="text-[10px] text-slate-500 block truncate mt-0.5">
-                                Last: {set.previous}
+                              <span className="text-[8px] sm:text-[10px] text-slate-500 block truncate mt-0.5">
+                                Prev: {set.previous}
                               </span>
                             )}
                           </div>
 
                           {/* Reps */}
-                          <div className="flex-1 min-w-[65px] sm:min-w-[80px]">
-                            <label className="text-[10px] text-slate-400 font-bold uppercase block mb-0.5">
+                          <div className="w-11 sm:w-16 shrink-0">
+                            <label className="text-[8px] sm:text-[10px] text-slate-400 font-bold uppercase block mb-0.5 text-center">
                               Reps
                             </label>
                             <input
                               type="number"
                               value={set.reps}
                               onChange={e => handleSetChange(exLog.id, set.id, 'reps', e.target.value)}
-                              className="w-full input-pro py-1 px-2 text-center text-sm font-black mono-num"
+                              className="w-full input-pro py-1 px-1 sm:px-2 text-center text-xs sm:text-sm font-black mono-num"
                             />
                           </div>
 
                           {/* Set Timer (Persistent across mobile lock/refresh) */}
                           <div className="text-center shrink-0">
-                            <label className="text-[10px] text-slate-400 font-bold uppercase block mb-0.5">
+                            <label className="text-[8px] sm:text-[10px] text-slate-400 font-bold uppercase block mb-0.5">
                               Time
                             </label>
                             <button
                               type="button"
                               onClick={() => handleToggleSetTimer(exLog.id, set)}
-                              className={`px-2.5 py-1.5 rounded-xl border text-xs font-black flex items-center gap-1 transition-all ${
+                              className={`px-1.5 sm:px-2.5 py-1 sm:py-1.5 rounded-lg sm:rounded-xl border text-[10px] sm:text-xs font-black flex items-center gap-0.5 sm:gap-1 transition-all ${
                                 isRunning
                                   ? 'bg-amber-500/20 text-amber-400 border-amber-500/50 animate-pulse'
                                   : liveSeconds > 0
@@ -883,36 +883,45 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                               }`}
                               title="Start / Stop set timer (survives phone lock and refresh)"
                             >
-                              {isRunning ? <Pause className="w-3 h-3 fill-current" /> : <Play className="w-3 h-3 fill-current" />}
+                              {isRunning ? <Pause className="w-2.5 h-2.5 fill-current" /> : <Play className="w-2.5 h-2.5 fill-current" />}
                               <span className="mono-num">{formatSetTime(liveSeconds)}</span>
                             </button>
                           </div>
 
                           {/* Complete Checkmark */}
-                          <div className="shrink-0 pl-1">
+                          <div className="shrink-0">
+                            <label className="text-[8px] sm:text-[10px] text-transparent font-bold uppercase block mb-0.5 select-none">
+                              .
+                            </label>
                             <button
                               type="button"
                               onClick={() => handleToggleComplete(exLog, set)}
-                              className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-all ${
+                              className={`w-7 h-7 sm:w-9 sm:h-9 rounded-lg sm:rounded-xl border flex items-center justify-center transition-all ${
                                 set.completed
                                   ? 'bg-fitrex-red border-fitrex-red text-white shadow-glow-red scale-105'
                                   : 'bg-slate-900 border-slate-700 text-slate-600 hover:border-fitrex-red/50'
                               }`}
                               title={set.completed ? 'Completed!' : 'Mark done'}
                             >
-                              <Check className={`w-5 h-5 font-black ${set.completed ? 'stroke-[3.5]' : 'opacity-0'}`} />
+                              <Check className={`w-3.5 h-3.5 sm:w-5 sm:h-5 font-black ${set.completed ? 'stroke-[3.5]' : 'opacity-0'}`} />
                             </button>
                           </div>
 
                           {/* Remove Set */}
                           {exLog.sets.length > 1 && (
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveSet(exLog.id, set.id)}
-                              className="text-slate-600 hover:text-rose-400 p-1"
-                            >
-                              ✕
-                            </button>
+                            <div className="shrink-0">
+                              <label className="text-[8px] sm:text-[10px] text-transparent font-bold uppercase block mb-0.5 select-none">
+                                .
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveSet(exLog.id, set.id)}
+                                className="text-slate-600 hover:text-rose-400 p-0.5 sm:p-1 text-xs"
+                                title="Remove Set"
+                              >
+                                ✕
+                              </button>
+                            </div>
                           )}
                         </div>
                       );
@@ -922,7 +931,7 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                     <button
                       type="button"
                       onClick={() => handleAddSet(exLog.id)}
-                      className="w-full py-2.5 rounded-xl bg-slate-900/60 border border-dashed border-slate-800 hover:border-fitrex-red/40 text-xs font-bold text-slate-300 hover:text-fitrex-red flex items-center justify-center gap-1.5 transition-colors"
+                      className="w-full py-2 sm:py-2.5 rounded-xl bg-slate-900/60 border border-dashed border-slate-800 hover:border-fitrex-red/40 text-xs font-bold text-slate-300 hover:text-fitrex-red flex items-center justify-center gap-1.5 transition-colors"
                     >
                       <Plus className="w-3.5 h-3.5" /> Add Another Set
                     </button>

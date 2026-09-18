@@ -136,7 +136,7 @@ export default function AnalyticsView({ activeProfileId }) {
           <select
             value={selectedExercise}
             onChange={e => setSelectedExercise(e.target.value)}
-            className="input-pro text-xs py-2.5 px-3 min-w-[240px] font-bold text-fitrex-red bg-slate-900 shadow-sm"
+            className="input-pro text-xs py-2.5 px-3 w-full sm:w-auto sm:min-w-[240px] font-bold text-fitrex-red bg-slate-900 shadow-sm"
           >
             {exerciseNames.map(name => (
               <option key={name} value={name}>{name}</option>
