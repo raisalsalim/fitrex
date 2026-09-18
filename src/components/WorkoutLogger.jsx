@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Plus, Check, Trash2, Calendar, Play, Pause, Video, Dumbbell, 
-  ChevronLeft, ChevronRight, Search, X, Flame, ShieldAlert, SlidersHorizontal, Layers
+  ChevronLeft, ChevronRight, Search, X, Flame, ChevronDown, ChevronUp, ChevronsUpDown
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { MUSCLE_GROUPS, EQUIPMENT_LIST } from '../data/defaultExercises';
@@ -26,6 +26,9 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
   const [pickerSearch, setPickerSearch] = useState('');
   const [personalRecords, setPersonalRecords] = useState({});
 
+  // Grouping / Accordion state map: { [exerciseId]: boolean }
+  const [expandedMap, setExpandedMap] = useState({});
+
   // Local ticker to re-render set timers every second
   const [, setTick] = useState(0);
 
@@ -48,6 +51,20 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
     setCurrentWorkout(todayWorkout);
     setSelectedMuscles(todayWorkout.targetMuscles || ['chest']);
     setPersonalRecords(getPersonalRecords(activeProfileId));
+
+    // Initialize expanded map: default expand only the last exercise
+    if (todayWorkout.exercises?.length) {
+      setExpandedMap(prev => {
+        const nextMap = { ...prev };
+        const exs = todayWorkout.exercises;
+        exs.forEach((e, idx) => {
+          if (nextMap[e.id] === undefined) {
+            nextMap[e.id] = idx === exs.length - 1; // latest is expanded
+          }
+        });
+        return nextMap;
+      });
+    }
   }, [selectedDate, activeProfileId]);
 
   // Interval ticker that keeps UI timers accurate and handles phone wakeup
@@ -99,16 +116,18 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
     }
   };
 
+  // Add exercise with AUTO-ACCORDION:
+  // Newly added exercise is EXPANDED, all previous exercises AUTO-GROUP / COLLAPSE
   const handleAddExercise = (exerciseTemplate) => {
     if (!currentWorkout) return;
     const prev = getPreviousPerformance(exerciseTemplate.name, currentWorkout.id, activeProfileId);
 
-    // Default weight unit: machine/cable default to 'blocks' or user unit 'kg'
     const defaultWeightUnit = exerciseTemplate.defaultUnit === 'blocks' ? 'blocks' : (prev?.weightUnit || unit);
     const initialWeight = prev?.weight || (defaultWeightUnit === 'blocks' ? 8 : 40);
 
+    const newExId = 'ex_' + Date.now();
     const newExerciseLog = {
-      id: 'ex_' + Date.now(),
+      id: newExId,
       exerciseId: exerciseTemplate.id,
       name: exerciseTemplate.name,
       muscle: exerciseTemplate.muscle,
@@ -136,7 +155,41 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
     const updated = { ...currentWorkout, exercises: [...(currentWorkout.exercises || []), newExerciseLog] };
     setCurrentWorkout(updated);
     saveWorkout(updated, activeProfileId);
+
+    // Auto-Accordion: Collapse all previous exercises, Expand only the newly added one
+    setExpandedMap(prevMap => {
+      const nextMap = {};
+      (currentWorkout.exercises || []).forEach(e => {
+        nextMap[e.id] = false; // collapse previous
+      });
+      nextMap[newExId] = true; // expand new
+      return nextMap;
+    });
+
     setShowPicker(false);
+  };
+
+  // Toggle individual exercise expand/collapse
+  const toggleExpandExercise = (exId) => {
+    setExpandedMap(prev => ({
+      ...prev,
+      [exId]: !prev[exId]
+    }));
+  };
+
+  // Check if all exercises are currently expanded
+  const exercisesList = currentWorkout?.exercises || [];
+  const areAllExpanded = exercisesList.length > 0 && exercisesList.every(e => expandedMap[e.id]);
+
+  // Toggle Expand All vs Collapse All
+  const handleToggleExpandAll = () => {
+    if (exercisesList.length === 0) return;
+    const targetState = !areAllExpanded;
+    const nextMap = {};
+    exercisesList.forEach(e => {
+      nextMap[e.id] = targetState;
+    });
+    setExpandedMap(nextMap);
   };
 
   const handleRemoveExercise = (exId) => {
@@ -415,10 +468,25 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
 
       {/* 4. Logged Exercises Section */}
       <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <span className="text-xs font-black uppercase text-slate-300">
-            2. Exercises & Sets ({currentWorkout?.exercises?.length || 0})
-          </span>
+        <div className="flex items-center justify-between gap-2 flex-wrap">
+          <div className="flex items-center gap-2.5">
+            <span className="text-xs font-black uppercase text-slate-300">
+              2. Exercises & Sets ({exercisesList.length})
+            </span>
+
+            {/* Expand All / Collapse All Toggle Button */}
+            {exercisesList.length > 0 && (
+              <button
+                type="button"
+                onClick={handleToggleExpandAll}
+                className="text-[11px] font-black px-2.5 py-1 rounded-lg bg-slate-900 border border-slate-700/80 text-fitrex-red hover:bg-fitrex-red hover:text-white transition-all flex items-center gap-1 shadow-sm"
+                title={areAllExpanded ? 'Group all exercises into compact rows' : 'Expand all exercises and sets'}
+              >
+                <ChevronsUpDown className="w-3.5 h-3.5" />
+                <span>{areAllExpanded ? 'Collapse All' : 'Expand All'}</span>
+              </button>
+            )}
+          </div>
 
           <button
             onClick={() => { setPickerSearch(''); setShowPicker(true); }}
@@ -435,11 +503,11 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
             </div>
             <h4 className="text-sm font-bold text-white">No exercises logged for this day</h4>
             <p className="text-xs text-slate-400 max-w-sm mx-auto">
-              Tap "Add Exercise" above to pick from 100+ movements including machines, dumbbells, cables, and barbells.
+              Tap "Add Exercise" above to pick from 100+ movements. Newly added exercises expand automatically!
             </p>
             <button
               onClick={() => { setPickerSearch(''); setShowPicker(true); }}
-              className="btn-pro-primary text-xs py-2 px-4 inline-flex items-center gap-1.5"
+              className="btn-pro-primary text-xs py-2 px-4 inline-flex items-center gap-1.5 shadow-glow-red"
             >
               <Plus className="w-4 h-4" /> Browse 100+ Exercises
             </button>
@@ -447,31 +515,50 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
         ) : (
           currentWorkout.exercises.map((exLog) => {
             const exUnit = exLog.weightUnit || unit;
+            const isExpanded = Boolean(expandedMap[exLog.id]);
+            const completedSetsCount = (exLog.sets || []).filter(s => s.completed).length;
+            const totalSetsCount = (exLog.sets || []).length;
+
             return (
-              <div key={exLog.id} className="pro-card p-4 sm:p-5 border-slate-800 space-y-4">
+              <div 
+                key={exLog.id} 
+                className={`pro-card p-4 sm:p-5 border transition-all ${
+                  isExpanded ? 'border-slate-800 bg-[#0a0f1d]' : 'border-slate-800/80 bg-slate-950/70 hover:border-slate-700'
+                } space-y-3.5`}
+              >
                 
                 {/* Exercise Header */}
                 <div className="flex items-center justify-between gap-3">
-                  <div className="flex items-center gap-2.5">
+                  <div 
+                    onClick={() => toggleExpandExercise(exLog.id)}
+                    className="flex items-center gap-2.5 cursor-pointer select-none flex-1 min-w-0"
+                    title={isExpanded ? 'Click to collapse/group' : 'Click to expand sets'}
+                  >
                     <div className="w-9 h-9 rounded-xl bg-fitrex-red/15 border border-fitrex-red/40 flex items-center justify-center text-fitrex-red shrink-0">
                       <Dumbbell className="w-4 h-4" />
                     </div>
-                    <div>
-                      <h4 className="text-sm sm:text-base font-black text-white flex items-center gap-2">
+                    <div className="min-w-0">
+                      <h4 className="text-sm sm:text-base font-black text-white flex items-center gap-2 truncate">
                         {exLog.name}
-                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 uppercase">
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 uppercase shrink-0">
                           {exLog.muscle}
                         </span>
                       </h4>
-                      {personalRecords[exLog.name]?.maxWeight > 0 && (
-                        <span className="text-[10px] text-amber-400 font-bold flex items-center gap-1">
-                          <Flame className="w-3 h-3 fill-current" /> All-Time PR: {personalRecords[exLog.name].maxWeight} {personalRecords[exLog.name].unit || unit}
+                      
+                      <div className="flex items-center gap-2 mt-0.5">
+                        <span className="text-[11px] text-slate-400 font-semibold">
+                          {completedSetsCount}/{totalSetsCount} sets completed
                         </span>
-                      )}
+                        {personalRecords[exLog.name]?.maxWeight > 0 && (
+                          <span className="text-[10px] text-amber-400 font-bold hidden sm:inline-flex items-center gap-1">
+                            <Flame className="w-3 h-3 fill-current" /> PR: {personalRecords[exLog.name].maxWeight} {personalRecords[exLog.name].unit || unit}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5">
+                  <div className="flex items-center gap-1.5 shrink-0">
                     
                     {/* Weight Unit Selector: KG vs BLOCKS */}
                     <div className="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800" title="Switch weight unit between KG and Number of Blocks / Pin Stack">
@@ -509,6 +596,30 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                       <Video className="w-4 h-4" />
                     </button>
 
+                    {/* Individual Exercise Group / Expand Toggle Button */}
+                    <button
+                      type="button"
+                      onClick={() => toggleExpandExercise(exLog.id)}
+                      className={`px-2 py-1.5 rounded-lg border text-xs font-black flex items-center gap-1 transition-all ${
+                        isExpanded
+                          ? 'bg-slate-800 hover:bg-slate-700 text-white border-slate-700'
+                          : 'bg-fitrex-red/15 text-fitrex-red border-fitrex-red/40 hover:bg-fitrex-red hover:text-white'
+                      }`}
+                      title={isExpanded ? 'Group/collapse sets' : 'Expand sets'}
+                    >
+                      {isExpanded ? (
+                        <>
+                          <ChevronUp className="w-4 h-4" />
+                          <span className="hidden sm:inline text-[11px]">Group</span>
+                        </>
+                      ) : (
+                        <>
+                          <ChevronDown className="w-4 h-4" />
+                          <span className="hidden sm:inline text-[11px]">Expand</span>
+                        </>
+                      )}
+                    </button>
+
                     {/* Delete Exercise */}
                     <button
                       type="button"
@@ -521,135 +632,163 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                   </div>
                 </div>
 
-                {/* Sets Table */}
-                <div className="space-y-2.5">
-                  {(exLog.sets || []).map((set) => {
-                    const liveSeconds = getLiveSetSeconds(set);
-                    const isRunning = Boolean(set.timerRunning);
-                    const setUnit = set.weightUnit || exLog.weightUnit || unit;
-                    const isBlocks = setUnit === 'blocks';
+                {/* COLLAPSED / GROUPED VIEW: Compact Summary Pill Row */}
+                {!isExpanded ? (
+                  <div 
+                    onClick={() => toggleExpandExercise(exLog.id)}
+                    className="cursor-pointer bg-slate-950/80 hover:bg-slate-900/80 p-2.5 rounded-xl border border-slate-800/80 flex items-center justify-between gap-2 transition-colors select-none"
+                    title="Click to expand sets details"
+                  >
+                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
+                      {(exLog.sets || []).map((s) => (
+                        <span
+                          key={s.id}
+                          className={`text-[10px] font-black px-2 py-0.5 rounded-lg border whitespace-nowrap ${
+                            s.completed
+                              ? 'bg-fitrex-red/15 text-fitrex-red border-fitrex-red/40 shadow-glow-red-sm'
+                              : 'bg-slate-900 text-slate-400 border-slate-800'
+                          }`}
+                        >
+                          S{s.setNum}: {s.weight}{s.weightUnit === 'blocks' ? ' blk' : ' kg'} × {s.reps} {s.completed ? '✓' : ''}
+                        </span>
+                      ))}
+                    </div>
 
-                    return (
-                      <div
-                        key={set.id}
-                        className={`p-3 rounded-xl border flex items-center justify-between gap-2 sm:gap-4 transition-all ${
-                          set.completed
-                            ? 'bg-fitrex-red/[0.08] border-fitrex-red/40'
-                            : isRunning
-                            ? 'bg-amber-500/[0.08] border-amber-500/40'
-                            : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'
-                        }`}
-                      >
-                        {/* Set # */}
-                        <div className="w-7 h-7 rounded-lg bg-slate-800 text-slate-300 text-xs font-black flex items-center justify-center shrink-0">
-                          {set.setNum}
-                        </div>
+                    <span className="text-[10px] font-bold text-slate-400 shrink-0 flex items-center gap-1">
+                      <ChevronDown className="w-3.5 h-3.5 text-fitrex-red" /> Tap to view sets
+                    </span>
+                  </div>
+                ) : (
+                  /* EXPANDED VIEW: Detailed Sets Table */
+                  <div className="space-y-2.5 pt-1">
+                    {(exLog.sets || []).map((set) => {
+                      const liveSeconds = getLiveSetSeconds(set);
+                      const isRunning = Boolean(set.timerRunning);
+                      const setUnit = set.weightUnit || exLog.weightUnit || unit;
+                      const isBlocks = setUnit === 'blocks';
 
-                        {/* Weight (kg or Blocks) */}
-                        <div className="flex-1 min-w-[85px] sm:min-w-[110px]">
-                          <div className="flex items-center justify-between mb-0.5">
-                            <label className="text-[10px] text-slate-400 font-bold uppercase block">
-                              {isBlocks ? 'Blocks / Pin' : `Weight (${unit})`}
+                      return (
+                        <div
+                          key={set.id}
+                          className={`p-3 rounded-xl border flex items-center justify-between gap-2 sm:gap-4 transition-all ${
+                            set.completed
+                              ? 'bg-fitrex-red/[0.08] border-fitrex-red/40'
+                              : isRunning
+                              ? 'bg-amber-500/[0.08] border-amber-500/40'
+                              : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'
+                          }`}
+                        >
+                          {/* Set # */}
+                          <div className="w-7 h-7 rounded-lg bg-slate-800 text-slate-300 text-xs font-black flex items-center justify-center shrink-0">
+                            {set.setNum}
+                          </div>
+
+                          {/* Weight (kg or Blocks) */}
+                          <div className="flex-1 min-w-[85px] sm:min-w-[110px]">
+                            <div className="flex items-center justify-between mb-0.5">
+                              <label className="text-[10px] text-slate-400 font-bold uppercase block">
+                                {isBlocks ? 'Blocks / Pin' : `Weight (${unit})`}
+                              </label>
+                              <button
+                                type="button"
+                                onClick={() => handleToggleSetWeightUnit(exLog.id, set.id)}
+                                className="text-[9px] font-black px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-fitrex-red border border-slate-700 leading-none"
+                                title="Click to switch between kg and weight blocks"
+                              >
+                                {isBlocks ? 'Blocks' : 'kg'}
+                              </button>
+                            </div>
+                            
+                            <input
+                              type="number"
+                              step={isBlocks ? '1' : '0.5'}
+                              value={set.weight}
+                              onChange={e => handleSetChange(exLog.id, set.id, 'weight', e.target.value)}
+                              placeholder={isBlocks ? 'e.g. 8' : '40'}
+                              className="w-full input-pro py-1 px-2 text-center text-sm font-black mono-num"
+                            />
+                            {set.previous && (
+                              <span className="text-[10px] text-slate-500 block truncate mt-0.5">
+                                Last: {set.previous}
+                              </span>
+                            )}
+                          </div>
+
+                          {/* Reps */}
+                          <div className="flex-1 min-w-[65px] sm:min-w-[80px]">
+                            <label className="text-[10px] text-slate-400 font-bold uppercase block mb-0.5">
+                              Reps
+                            </label>
+                            <input
+                              type="number"
+                              value={set.reps}
+                              onChange={e => handleSetChange(exLog.id, set.id, 'reps', e.target.value)}
+                              className="w-full input-pro py-1 px-2 text-center text-sm font-black mono-num"
+                            />
+                          </div>
+
+                          {/* Set Timer (Persistent across mobile lock/refresh) */}
+                          <div className="text-center shrink-0">
+                            <label className="text-[10px] text-slate-400 font-bold uppercase block mb-0.5">
+                              Time
                             </label>
                             <button
                               type="button"
-                              onClick={() => handleToggleSetWeightUnit(exLog.id, set.id)}
-                              className="text-[9px] font-black px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-fitrex-red border border-slate-700 leading-none"
-                              title="Click to switch between kg and weight blocks"
+                              onClick={() => handleToggleSetTimer(exLog.id, set)}
+                              className={`px-2.5 py-1.5 rounded-xl border text-xs font-black flex items-center gap-1 transition-all ${
+                                isRunning
+                                  ? 'bg-amber-500/20 text-amber-400 border-amber-500/50 animate-pulse'
+                                  : liveSeconds > 0
+                                  ? 'bg-slate-800 text-fitrex-red border-slate-700'
+                                  : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
+                              }`}
+                              title="Start / Stop set timer (survives phone lock and refresh)"
                             >
-                              {isBlocks ? 'Blocks' : 'kg'}
+                              {isRunning ? <Pause className="w-3 h-3 fill-current" /> : <Play className="w-3 h-3 fill-current" />}
+                              <span className="mono-num">{formatSetTime(liveSeconds)}</span>
                             </button>
                           </div>
-                          
-                          <input
-                            type="number"
-                            step={isBlocks ? '1' : '0.5'}
-                            value={set.weight}
-                            onChange={e => handleSetChange(exLog.id, set.id, 'weight', e.target.value)}
-                            placeholder={isBlocks ? 'e.g. 8' : '40'}
-                            className="w-full input-pro py-1 px-2 text-center text-sm font-black mono-num"
-                          />
-                          {set.previous && (
-                            <span className="text-[10px] text-slate-500 block truncate mt-0.5">
-                              Last: {set.previous}
-                            </span>
+
+                          {/* Complete Checkmark */}
+                          <div className="shrink-0 pl-1">
+                            <button
+                              type="button"
+                              onClick={() => handleToggleComplete(exLog, set)}
+                              className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-all ${
+                                set.completed
+                                  ? 'bg-fitrex-red border-fitrex-red text-white shadow-glow-red scale-105'
+                                  : 'bg-slate-900 border-slate-700 text-slate-600 hover:border-fitrex-red/50'
+                              }`}
+                              title={set.completed ? 'Completed!' : 'Mark done'}
+                            >
+                              <Check className={`w-5 h-5 font-black ${set.completed ? 'stroke-[3.5]' : 'opacity-0'}`} />
+                            </button>
+                          </div>
+
+                          {/* Remove Set */}
+                          {exLog.sets.length > 1 && (
+                            <button
+                              type="button"
+                              onClick={() => handleRemoveSet(exLog.id, set.id)}
+                              className="text-slate-600 hover:text-rose-400 p-1"
+                            >
+                              ✕
+                            </button>
                           )}
                         </div>
+                      );
+                    })}
 
-                        {/* Reps */}
-                        <div className="flex-1 min-w-[65px] sm:min-w-[80px]">
-                          <label className="text-[10px] text-slate-400 font-bold uppercase block mb-0.5">
-                            Reps
-                          </label>
-                          <input
-                            type="number"
-                            value={set.reps}
-                            onChange={e => handleSetChange(exLog.id, set.id, 'reps', e.target.value)}
-                            className="w-full input-pro py-1 px-2 text-center text-sm font-black mono-num"
-                          />
-                        </div>
-
-                        {/* Set Timer (Persistent across mobile lock/refresh) */}
-                        <div className="text-center shrink-0">
-                          <label className="text-[10px] text-slate-400 font-bold uppercase block mb-0.5">
-                            Time
-                          </label>
-                          <button
-                            type="button"
-                            onClick={() => handleToggleSetTimer(exLog.id, set)}
-                            className={`px-2.5 py-1.5 rounded-xl border text-xs font-black flex items-center gap-1 transition-all ${
-                              isRunning
-                                ? 'bg-amber-500/20 text-amber-400 border-amber-500/50 animate-pulse'
-                                : liveSeconds > 0
-                                ? 'bg-slate-800 text-fitrex-red border-slate-700'
-                                : 'bg-slate-900 text-slate-400 border-slate-800 hover:text-white'
-                            }`}
-                            title="Start / Stop set timer (survives phone lock and refresh)"
-                          >
-                            {isRunning ? <Pause className="w-3 h-3 fill-current" /> : <Play className="w-3 h-3 fill-current" />}
-                            <span className="mono-num">{formatSetTime(liveSeconds)}</span>
-                          </button>
-                        </div>
-
-                        {/* Complete Checkmark */}
-                        <div className="shrink-0 pl-1">
-                          <button
-                            type="button"
-                            onClick={() => handleToggleComplete(exLog, set)}
-                            className={`w-10 h-10 rounded-xl border flex items-center justify-center transition-all ${
-                              set.completed
-                                ? 'bg-fitrex-red border-fitrex-red text-white shadow-glow-red scale-105'
-                                : 'bg-slate-900 border-slate-700 text-slate-600 hover:border-fitrex-red/50'
-                            }`}
-                            title={set.completed ? 'Completed!' : 'Mark done'}
-                          >
-                            <Check className={`w-5 h-5 font-black ${set.completed ? 'stroke-[3.5]' : 'opacity-0'}`} />
-                          </button>
-                        </div>
-
-                        {/* Remove Set */}
-                        {exLog.sets.length > 1 && (
-                          <button
-                            type="button"
-                            onClick={() => handleRemoveSet(exLog.id, set.id)}
-                            className="text-slate-600 hover:text-rose-400 p-1"
-                          >
-                            ✕
-                          </button>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
-
-                {/* Add Set Button */}
-                <button
-                  type="button"
-                  onClick={() => handleAddSet(exLog.id)}
-                  className="w-full py-2.5 rounded-xl bg-slate-900/60 border border-dashed border-slate-800 hover:border-fitrex-red/40 text-xs font-bold text-slate-300 hover:text-fitrex-red flex items-center justify-center gap-1.5 transition-colors"
-                >
-                  <Plus className="w-3.5 h-3.5" /> Add Another Set
-                </button>
+                    {/* Add Set Button */}
+                    <button
+                      type="button"
+                      onClick={() => handleAddSet(exLog.id)}
+                      className="w-full py-2.5 rounded-xl bg-slate-900/60 border border-dashed border-slate-800 hover:border-fitrex-red/40 text-xs font-bold text-slate-300 hover:text-fitrex-red flex items-center justify-center gap-1.5 transition-colors"
+                    >
+                      <Plus className="w-3.5 h-3.5" /> Add Another Set
+                    </button>
+                  </div>
+                )}
 
               </div>
             );
