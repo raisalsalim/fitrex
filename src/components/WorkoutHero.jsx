@@ -1,10 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Play, Pause, RotateCcw, Flame, CheckCircle2, Clock, Zap } from 'lucide-react';
+import { getActiveProfile } from '../services/storage';
 
 export default function WorkoutHero({ currentWorkout, unit = 'kg', activeProfileId, selectedDate }) {
-  const timerStorageKey = `fitrex_session_timer_${activeProfileId}_${selectedDate || 'today'}`;
+  const timerStorageKey = `fitrex_session_timer_${activeProfileId || 'def'}_${selectedDate || 'today'}`;
+  const activeProfile = getActiveProfile();
 
-  // Read persisted timer state or default
   const getPersistedTimer = () => {
     try {
       const saved = localStorage.getItem(timerStorageKey);
@@ -23,7 +24,6 @@ export default function WorkoutHero({ currentWorkout, unit = 'kg', activeProfile
   const [timerState, setTimerState] = useState(getPersistedTimer);
   const [displaySeconds, setDisplaySeconds] = useState(0);
 
-  // Compute actual elapsed seconds based on real timestamp
   const calculateCurrentSeconds = (state) => {
     let sec = state.accumulated || 0;
     if (state.isRunning && state.startTimestamp) {
@@ -33,14 +33,12 @@ export default function WorkoutHero({ currentWorkout, unit = 'kg', activeProfile
     return sec;
   };
 
-  // Re-sync when date or profile changes
   useEffect(() => {
     const current = getPersistedTimer();
     setTimerState(current);
     setDisplaySeconds(calculateCurrentSeconds(current));
   }, [timerStorageKey]);
 
-  // Real-time ticking and screen-wake / visibility change re-calculation
   useEffect(() => {
     const syncTime = () => {
       setDisplaySeconds(calculateCurrentSeconds(timerState));
@@ -52,7 +50,6 @@ export default function WorkoutHero({ currentWorkout, unit = 'kg', activeProfile
       interval = setInterval(syncTime, 1000);
     }
 
-    // Mobile screen lock / unlock & browser tab visibility events
     const handleVisibility = () => {
       syncTime();
     };
@@ -67,7 +64,6 @@ export default function WorkoutHero({ currentWorkout, unit = 'kg', activeProfile
     };
   }, [timerState]);
 
-  // Persist state to localStorage
   const saveState = (newState) => {
     setTimerState(newState);
     setDisplaySeconds(calculateCurrentSeconds(newState));
@@ -78,7 +74,6 @@ export default function WorkoutHero({ currentWorkout, unit = 'kg', activeProfile
 
   const handleToggleRunning = () => {
     if (timerState.isRunning) {
-      // PAUSE: lock in accumulated seconds
       const currentTotal = calculateCurrentSeconds(timerState);
       saveState({
         accumulated: currentTotal,
@@ -86,7 +81,6 @@ export default function WorkoutHero({ currentWorkout, unit = 'kg', activeProfile
         startTimestamp: null
       });
     } else {
-      // START / RESUME: record start timestamp
       saveState({
         accumulated: timerState.accumulated || 0,
         isRunning: true,
@@ -124,21 +118,23 @@ export default function WorkoutHero({ currentWorkout, unit = 'kg', activeProfile
     });
   });
 
+  const sessionTitle = activeProfile?.name ? `${activeProfile.name}'s Workout Session` : "Today's Training Session";
+
   return (
-    <div className="pro-card p-5 sm:p-6 border-slate-800/90 mb-6 bg-gradient-to-r from-[#0d1222] to-[#080b15] shadow-2xl relative overflow-hidden">
+    <div className="pro-card p-5 sm:p-6 border-slate-800/90 mb-6 bg-gradient-to-r from-[#0b101f] to-[#070a14] shadow-2xl relative overflow-hidden">
       
       {/* Subtle red ambient glow */}
       <div className="absolute -top-20 -right-20 w-56 h-56 bg-fitrex-red/10 rounded-full blur-3xl pointer-events-none" />
 
       <div className="flex flex-col md:flex-row items-center justify-between gap-5 relative z-10">
         
-        {/* Left: Friendly Greeting & Status */}
-        <div className="text-center md:text-left space-y-1">
-          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-fitrex-red/10 border border-fitrex-red/30 text-fitrex-red text-xs font-black shadow-glow-red-sm">
-            <Flame className="w-3.5 h-3.5 fill-current animate-pulse" /> Workout Active
+        {/* Left: User-Specific Title & Status */}
+        <div className="text-center md:text-left space-y-1.5">
+          <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-fitrex-red/15 border border-fitrex-red/30 text-fitrex-red text-xs font-black shadow-glow-red-sm">
+            <Flame className="w-3.5 h-3.5 fill-current animate-pulse" /> Workout Session
           </div>
-          <h2 className="text-2xl font-black text-white tracking-tight">
-            Today's Training Session
+          <h2 className="text-2xl font-black text-white tracking-tight flex items-center gap-2.5 justify-center md:justify-start">
+            {sessionTitle}
           </h2>
           <p className="text-xs text-slate-400">
             {exercises.length === 0 

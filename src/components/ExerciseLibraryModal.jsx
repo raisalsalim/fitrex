@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { BookOpen, Search, Plus, Info, Video, Dumbbell } from 'lucide-react';
-import { MUSCLE_GROUPS } from '../data/defaultExercises';
+import { MUSCLE_GROUPS, EQUIPMENT_LIST } from '../data/defaultExercises';
 import { getAllExercises, saveCustomExercise } from '../services/storage';
 import PostureModal from './PostureModal';
 
 export default function ExerciseLibraryModal({ onAddExerciseToWorkout }) {
   const [exercises, setExercises] = useState(getAllExercises());
   const [selectedMuscle, setSelectedMuscle] = useState('all');
+  const [selectedEquipment, setSelectedEquipment] = useState('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [viewExercise, setViewExercise] = useState(null);
   const [isCreatingCustom, setIsCreatingCustom] = useState(false);
@@ -19,9 +20,11 @@ export default function ExerciseLibraryModal({ onAddExerciseToWorkout }) {
 
   const filtered = exercises.filter(ex => {
     const matchMuscle = selectedMuscle === 'all' || ex.muscle === selectedMuscle;
+    const matchEquipment = selectedEquipment === 'all' || ex.equipment === selectedEquipment;
     const matchSearch = ex.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                        (ex.muscle || '').toLowerCase().includes(searchQuery.toLowerCase());
-    return matchMuscle && matchSearch;
+                        (ex.muscle || '').toLowerCase().includes(searchQuery.toLowerCase()) ||
+                        (ex.equipment || '').toLowerCase().includes(searchQuery.toLowerCase());
+    return matchMuscle && matchEquipment && matchSearch;
   });
 
   const handleCreateCustom = (e) => {
@@ -31,6 +34,7 @@ export default function ExerciseLibraryModal({ onAddExerciseToWorkout }) {
     saveCustomExercise({
       name: customName.trim(),
       muscle: customMuscle,
+      equipment: 'dumbbell',
       youtubeUrl: customVideo.trim(),
       photoUrl: customPhoto.trim(),
       cues: customCue ? [customCue.trim()] : ['Focus on proper posture and controlled tempo.'],
@@ -55,12 +59,12 @@ export default function ExerciseLibraryModal({ onAddExerciseToWorkout }) {
             <h2 className="text-xl font-black text-white flex items-center gap-2">
               <BookOpen className="w-6 h-6 text-fitrex-red" /> Exercise Library & Form Guides
             </h2>
-            <p className="text-xs text-slate-400">Search {exercises.length} movements with videos, pictures & setup notes</p>
+            <p className="text-xs text-slate-400">Search {exercises.length} gym movements with posture cues, pictures & videos</p>
           </div>
 
           <button
             onClick={() => setIsCreatingCustom(true)}
-            className="btn-pro-primary text-xs py-2 px-4 w-full sm:w-auto"
+            className="btn-pro-primary text-xs py-2 px-4 w-full sm:w-auto shadow-glow-red"
           >
             <Plus className="w-4 h-4" /> Create Custom Exercise
           </button>
@@ -71,14 +75,14 @@ export default function ExerciseLibraryModal({ onAddExerciseToWorkout }) {
           <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
           <input
             type="text"
-            placeholder="Search all exercises (e.g. Shoulder press, Squat, Lat pulldown, Curls)..."
+            placeholder="Search all 100+ exercises (Shoulder press, Squat, Lat pulldown, Curls, Pushups)..."
             value={searchQuery}
             onChange={e => setSearchQuery(e.target.value)}
             className="w-full input-pro pl-10 text-xs py-3"
           />
         </div>
 
-        {/* VISIBLE FILTER TABS (Never clipped) */}
+        {/* MUSCLE FILTER TABS */}
         <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 pt-1 no-scrollbar scroll-smooth">
           <button
             onClick={() => setSelectedMuscle('all')}
@@ -105,6 +109,23 @@ export default function ExerciseLibraryModal({ onAddExerciseToWorkout }) {
             </button>
           ))}
         </div>
+
+        {/* EQUIPMENT FILTER TABS */}
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar scroll-smooth">
+          {EQUIPMENT_LIST.map(eq => (
+            <button
+              key={eq.id}
+              onClick={() => setSelectedEquipment(eq.id)}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap shrink-0 transition-all ${
+                selectedEquipment === eq.id
+                  ? 'bg-slate-700 text-white border border-slate-500'
+                  : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
+              }`}
+            >
+              {eq.name}
+            </button>
+          ))}
+        </div>
       </div>
 
       {/* Exercises Visual Grid */}
@@ -126,6 +147,16 @@ export default function ExerciseLibraryModal({ onAddExerciseToWorkout }) {
                   <span className="text-[10px] font-black uppercase px-2.5 py-0.5 rounded-full bg-slate-950/80 backdrop-blur-md text-fitrex-red border border-fitrex-red/40">
                     {ex.muscle}
                   </span>
+                  {ex.equipment && (
+                    <span className="text-[10px] font-bold uppercase px-2 py-0.5 rounded-full bg-slate-900/80 backdrop-blur-md text-slate-300 border border-slate-700">
+                      {ex.equipment}
+                    </span>
+                  )}
+                  {ex.defaultUnit === 'blocks' && (
+                    <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-amber-500/80 text-black">
+                      Blocks
+                    </span>
+                  )}
                   {ex.isCustom && (
                     <span className="text-[10px] bg-purple-500/80 text-white px-2 py-0.5 rounded-full font-bold">
                       Custom
@@ -162,9 +193,9 @@ export default function ExerciseLibraryModal({ onAddExerciseToWorkout }) {
               {onAddExerciseToWorkout && (
                 <button
                   onClick={() => onAddExerciseToWorkout(ex)}
-                  className="btn-pro-primary text-xs py-1.5 px-3.5"
+                  className="btn-pro-primary text-xs py-1.5 px-3.5 shadow-glow-red"
                 >
-                  Add +
+                  Add to Workout +
                 </button>
               )}
             </div>

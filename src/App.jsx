@@ -9,18 +9,17 @@ import PinLockModal from './components/PinLockModal';
 import ProfileSelectorModal from './components/ProfileSelectorModal';
 import SettingsModal from './components/SettingsModal';
 import { 
-  getActiveProfileId, getPinConfig, getSettings, syncWithGist 
+  getActiveProfileId, isAppLocked, lockSession, unlockSession, 
+  getAuthenticatedProfileId, syncWithGist 
 } from './services/storage';
 
 export default function App() {
   const [currentView, setCurrentView] = useState('workouts'); // 'workouts' | 'analytics' | 'body' | 'library'
   const [activeProfileId, setActiveProfileId] = useState(() => getActiveProfileId());
 
-  // Security Lock State
-  const [isLocked, setIsLocked] = useState(() => {
-    const config = getPinConfig();
-    return Boolean(config.enabled && config.pinHash);
-  });
+  // Security Lock State - Survives mobile lock & tab refresh!
+  // Only locked on first-time setup or when user explicitly clicks Lock button
+  const [isLocked, setIsLocked] = useState(() => isAppLocked());
   const [showPinSetup, setShowPinSetup] = useState(false);
 
   // Modals
@@ -43,8 +42,22 @@ export default function App() {
     setTimerOpen(true);
   };
 
+  const handleLockApp = () => {
+    lockSession();
+    setIsLocked(true);
+  };
+
+  const handleUnlockApp = (profileId) => {
+    if (profileId) {
+      setActiveProfileId(profileId);
+      unlockSession(profileId);
+    }
+    setIsLocked(false);
+    setShowPinSetup(false);
+  };
+
   return (
-    <div className="min-h-screen bg-[#080b12] text-slate-100 flex flex-col selection:bg-emerald-500/30 selection:text-emerald-300">
+    <div className="min-h-screen bg-[#05070d] text-slate-100 flex flex-col selection:bg-red-500/30 selection:text-red-300">
       
       {/* Top Navigation */}
       <Navbar
@@ -52,7 +65,7 @@ export default function App() {
         setCurrentView={setCurrentView}
         onOpenProfile={() => setShowProfileModal(true)}
         onOpenSettings={() => setShowSettingsModal(true)}
-        onLockApp={() => setIsLocked(true)}
+        onLockApp={handleLockApp}
         onToggleTimer={() => setTimerOpen(prev => !prev)}
         timerRunning={timerRunning}
         timerSeconds={timerSeconds}
@@ -102,15 +115,11 @@ export default function App() {
         setIsRunning={setTimerRunning}
       />
 
-      {/* Security PIN Lock Screen */}
+      {/* Security PIN Lock Screen & First-Time Login */}
       <PinLockModal
         isOpen={isLocked || showPinSetup}
-        forceSetup={showPinSetup}
-        onUnlock={() => {
-          setIsLocked(false);
-          setShowPinSetup(false);
-        }}
-        onClose={() => setShowPinSetup(false)}
+        isFirstTime={!getAuthenticatedProfileId()}
+        onUnlock={handleUnlockApp}
       />
 
       {/* Profile Switcher Modal */}
@@ -119,6 +128,7 @@ export default function App() {
         onClose={() => setShowProfileModal(false)}
         onProfileChanged={(newId) => {
           setActiveProfileId(newId);
+          unlockSession(newId);
         }}
       />
 

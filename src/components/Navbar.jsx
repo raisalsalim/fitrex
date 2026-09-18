@@ -1,74 +1,71 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { 
-  Dumbbell, Activity, LineChart, BookOpen, Settings, Lock, 
-  Cloud, CloudOff, RefreshCw, Timer, ChevronDown
+  Dumbbell, LineChart, Activity, BookOpen, Lock, Settings, 
+  Cloud, CloudOff, RefreshCw, ChevronDown, Timer, User
 } from 'lucide-react';
 import { getActiveProfile, getGistConfig } from '../services/storage';
 
-export default function Navbar({
-  currentView,
-  setCurrentView,
-  onOpenProfile,
-  onOpenSettings,
-  onLockApp,
-  onToggleTimer,
-  timerRunning,
-  timerSeconds,
-  onSyncGist
+export default function Navbar({ 
+  currentView, 
+  setCurrentView, 
+  onOpenProfile, 
+  onOpenSettings, 
+  onLockApp, 
+  onToggleTimer, 
+  timerRunning, 
+  timerSeconds, 
+  onSyncGist 
 }) {
-  const activeProfile = getActiveProfile();
+  const [activeProfile, setActiveProfile] = useState(getActiveProfile());
   const gistConfig = getGistConfig();
 
-  const formatTimer = (s) => {
-    const mins = Math.floor(s / 60);
-    const secs = s % 60;
-    return `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+  useEffect(() => {
+    setActiveProfile(getActiveProfile());
+  }, [currentView]);
+
+  const formatTimer = (sec) => {
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m}:${s < 10 ? '0' : ''}${s}`;
   };
 
+  const displayName = activeProfile?.name || 'My Profile';
+  const displayAvatar = activeProfile?.avatar || (activeProfile?.name ? activeProfile.name.charAt(0).toUpperCase() : 'U');
+
   return (
-    <header className="sticky top-0 z-40 bg-[#05070d]/95 backdrop-blur-xl border-b border-white/[0.08] px-4 py-3">
-      <div className="max-w-6xl mx-auto flex items-center justify-between gap-3">
+    <header className="sticky top-0 z-40 bg-[#05070d]/95 backdrop-blur-md border-b border-white/[0.08] px-3 sm:px-6 py-2.5 shadow-xl">
+      <div className="max-w-6xl mx-auto flex items-center justify-between gap-2 sm:gap-4">
         
-        {/* Brand & Red Logo */}
-        <div className="flex items-center gap-3.5">
+        {/* Brand with Official FITREX CLUB Panther Logo */}
+        <div className="flex items-center gap-3">
           <div 
-            className="flex items-center gap-2.5 cursor-pointer group" 
+            className="flex items-center gap-2 cursor-pointer group" 
             onClick={() => setCurrentView('workouts')}
           >
-            <div className="w-10 h-10 rounded-2xl bg-gradient-to-tr from-fitrex-red to-red-600 flex items-center justify-center shadow-glow-red group-hover:scale-105 transition-transform">
-              <Dumbbell className="w-5 h-5 text-white font-black -rotate-45" />
-            </div>
-            <div>
-              <div className="flex items-center gap-1.5">
-                <span className="text-lg font-black tracking-wider text-white">
-                  FITREX
-                </span>
-                <span className="text-[10px] font-extrabold px-1.5 py-0.5 rounded bg-fitrex-red/20 text-fitrex-red border border-fitrex-red/40 tracking-wider">
-                  PRO
-                </span>
-              </div>
-              <span className="block text-[10px] text-slate-400 font-semibold tracking-widest uppercase -mt-0.5">
-                Workout Tracker
-              </span>
+            <div className="h-11 w-28 sm:w-32 flex items-center justify-center overflow-hidden">
+              <img 
+                src="./logo.png" 
+                alt="FITREX CLUB" 
+                className="h-full w-full object-contain drop-shadow-[0_0_12px_rgba(239,68,68,0.4)] group-hover:scale-105 transition-transform"
+              />
             </div>
           </div>
 
-          {/* Profile Switcher */}
+          {/* User-Specific Profile Badge & Switcher */}
           <button
             onClick={onOpenProfile}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-slate-900/90 border border-slate-700/80 hover:border-fitrex-red/50 transition-all shadow-sm"
-            title="Switch User Profile"
+            className="flex items-center gap-2 px-2.5 sm:px-3 py-1.5 rounded-full bg-slate-900/90 border border-slate-700/80 hover:border-fitrex-red/60 transition-all shadow-sm group"
+            title="Switch or Manage User Profile"
           >
             <div
-              className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white shadow-sm"
-              style={{ backgroundColor: activeProfile.color || '#ef4444' }}
+              className="w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-black text-white shadow-sm bg-fitrex-red"
             >
-              {activeProfile.avatar || activeProfile.name.charAt(0).toUpperCase()}
+              {displayAvatar}
             </div>
-            <span className="text-xs font-bold text-slate-200 max-w-[80px] truncate">
-              {activeProfile.name}
+            <span className="text-xs font-black text-slate-200 max-w-[90px] sm:max-w-[120px] truncate group-hover:text-white">
+              {displayName}
             </span>
-            <ChevronDown className="w-3 h-3 text-slate-400" />
+            <ChevronDown className="w-3 h-3 text-slate-400 group-hover:text-fitrex-red transition-colors" />
           </button>
         </div>
 
@@ -93,7 +90,7 @@ export default function Navbar({
                 : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
             }`}
           >
-            <LineChart className="w-4 h-4" /> Analytics & PRs
+            <LineChart className="w-4 h-4" /> Progress & PRs
           </button>
 
           <button
@@ -132,7 +129,7 @@ export default function Navbar({
             }`}
             title="Gym Rest Timer"
           >
-            <Timer className={`w-4 h-4 ${timerRunning ? 'animate-spin' : ''}`} />
+            <Timer className={`w-4 h-4 ${timerRunning ? 'animate-spin text-fitrex-red' : ''}`} />
             <span className="mono-num font-bold">{formatTimer(timerSeconds)}</span>
           </button>
 
@@ -157,16 +154,16 @@ export default function Navbar({
             )}
           </button>
 
-          {/* PIN Lock */}
+          {/* PIN Lock App Button */}
           <button
             onClick={onLockApp}
-            className="p-2 rounded-xl bg-slate-900/80 border border-slate-700/80 hover:border-slate-600 text-slate-400 hover:text-white transition-colors"
-            title="Lock Fitrex with PIN"
+            className="p-2 rounded-xl bg-slate-900/80 border border-slate-700/80 hover:border-fitrex-red/60 text-slate-400 hover:text-white transition-colors"
+            title="Lock Fitrex App with PIN"
           >
             <Lock className="w-4 h-4" />
           </button>
 
-          {/* Settings */}
+          {/* Settings Modal Button */}
           <button
             onClick={onOpenSettings}
             className="p-2 rounded-xl bg-slate-900/80 border border-slate-700/80 hover:border-slate-600 text-slate-400 hover:text-white transition-colors"

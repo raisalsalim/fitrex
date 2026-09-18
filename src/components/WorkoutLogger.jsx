@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { 
-  Calendar, ChevronLeft, ChevronRight, Plus, Trash2, Check, 
-  Dumbbell, Flame, Video, Play, Pause, Search, RotateCcw, Trophy, X
+  Plus, Check, Trash2, Calendar, Play, Pause, Video, Dumbbell, 
+  ChevronLeft, ChevronRight, Search, X, Flame, ShieldAlert, SlidersHorizontal, Layers
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
-import { MUSCLE_GROUPS } from '../data/defaultExercises';
+import { MUSCLE_GROUPS, EQUIPMENT_LIST } from '../data/defaultExercises';
 import { 
   getWorkouts, saveWorkout, getPreviousPerformance, 
   getAllExercises, getSettings, getPersonalRecords, getActiveProfileId 
@@ -22,64 +22,65 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
   const [selectedExerciseForModal, setSelectedExerciseForModal] = useState(null);
   const [showPicker, setShowPicker] = useState(false);
   const [pickerFilter, setPickerFilter] = useState('all');
+  const [equipmentFilter, setEquipmentFilter] = useState('all');
   const [pickerSearch, setPickerSearch] = useState('');
   const [personalRecords, setPersonalRecords] = useState({});
 
   // Local ticker to re-render set timers every second
   const [, setTick] = useState(0);
 
-  const getDayName = (dateStr) => {
-    const d = new Date(dateStr + 'T12:00:00');
-    return d.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
-  };
-
+  // Sync / Load workout when date or profile changes
   useEffect(() => {
     const workouts = getWorkouts(activeProfileId);
-    const existing = workouts.find(w => w.date === selectedDate);
-
-    if (existing) {
-      setCurrentWorkout(existing);
-      setSelectedMuscles(existing.muscles || ['chest']);
-    } else {
-      const newWorkout = {
-        id: 'wo_' + selectedDate + '_' + activeProfileId,
+    let todayWorkout = workouts.find(w => w.date === selectedDate);
+    
+    if (!todayWorkout) {
+      todayWorkout = {
+        id: 'workout_' + selectedDate + '_' + (activeProfileId || 'def'),
         date: selectedDate,
-        dayOfWeek: new Date(selectedDate + 'T12:00:00').toLocaleDateString('en-US', { weekday: 'long' }),
-        muscles: ['chest'],
+        targetMuscles: ['chest'],
         exercises: [],
-        notes: ''
+        notes: '',
+        isCompleted: false,
+        durationMinutes: 0
       };
-      setCurrentWorkout(newWorkout);
-      setSelectedMuscles(['chest']);
     }
-
+    setCurrentWorkout(todayWorkout);
+    setSelectedMuscles(todayWorkout.targetMuscles || ['chest']);
     setPersonalRecords(getPersonalRecords(activeProfileId));
   }, [selectedDate, activeProfileId]);
 
-  // Timer interval & screen lock/unlock sync for individual sets
+  // Interval ticker that keeps UI timers accurate and handles phone wakeup
   useEffect(() => {
     const interval = setInterval(() => {
       setTick(t => t + 1);
     }, 1000);
 
-    const onVisibilityChange = () => {
-      setTick(t => t + 1);
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') {
+        setTick(t => t + 1);
+      }
     };
-
-    document.addEventListener('visibilitychange', onVisibilityChange);
-    window.addEventListener('focus', onVisibilityChange);
+    window.addEventListener('visibilitychange', onVisible);
+    window.addEventListener('focus', onVisible);
 
     return () => {
       clearInterval(interval);
-      document.removeEventListener('visibilitychange', onVisibilityChange);
-      window.removeEventListener('focus', onVisibilityChange);
+      window.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('focus', onVisible);
     };
   }, []);
 
-  const changeDate = (days) => {
-    const d = new Date(selectedDate + 'T12:00:00');
-    d.setDate(d.getDate() + days);
+  const changeDate = (offsetDays) => {
+    const d = new Date(selectedDate);
+    d.setDate(d.getDate() + offsetDays);
     setSelectedDate(d.toISOString().split('T')[0]);
+  };
+
+  const getDayName = (dateStr) => {
+    const days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
+    const d = new Date(dateStr + 'T12:00:00');
+    return days[d.getDay()];
   };
 
   const toggleMuscle = (muscleId) => {
@@ -92,7 +93,7 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
     }
     setSelectedMuscles(next);
     if (currentWorkout) {
-      const updated = { ...currentWorkout, muscles: next };
+      const updated = { ...currentWorkout, targetMuscles: next };
       setCurrentWorkout(updated);
       saveWorkout(updated, activeProfileId);
     }
@@ -102,11 +103,17 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
     if (!currentWorkout) return;
     const prev = getPreviousPerformance(exerciseTemplate.name, currentWorkout.id, activeProfileId);
 
+    // Default weight unit: machine/cable default to 'blocks' or user unit 'kg'
+    const defaultWeightUnit = exerciseTemplate.defaultUnit === 'blocks' ? 'blocks' : (prev?.weightUnit || unit);
+    const initialWeight = prev?.weight || (defaultWeightUnit === 'blocks' ? 8 : 40);
+
     const newExerciseLog = {
       id: 'ex_' + Date.now(),
       exerciseId: exerciseTemplate.id,
       name: exerciseTemplate.name,
       muscle: exerciseTemplate.muscle,
+      equipment: exerciseTemplate.equipment || 'dumbbell',
+      weightUnit: defaultWeightUnit,
       youtubeUrl: exerciseTemplate.youtubeUrl || '',
       photoUrl: exerciseTemplate.photoUrl || '',
       cues: exerciseTemplate.cues || [],
@@ -114,13 +121,14 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
         {
           id: 'set_' + Date.now() + '_1',
           setNum: 1,
-          weight: prev?.weight || 40,
+          weight: initialWeight,
+          weightUnit: defaultWeightUnit,
           reps: prev?.reps || 10,
           durationSeconds: 0,
           timerRunning: false,
           timerStartTime: null,
           completed: false,
-          previous: prev ? `${prev.weight} ${unit} × ${prev.reps}` : null
+          previous: prev ? `${prev.weight} ${prev.weightUnit || defaultWeightUnit} × ${prev.reps}` : null
         }
       ]
     };
@@ -142,10 +150,12 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
       if (ex.id !== exId) return ex;
       const sets = ex.sets || [];
       const last = sets[sets.length - 1];
+      const currentUnit = last?.weightUnit || ex.weightUnit || unit;
       const newSet = {
         id: 'set_' + Date.now(),
         setNum: sets.length + 1,
-        weight: last ? last.weight : 40,
+        weight: last ? last.weight : (currentUnit === 'blocks' ? 8 : 40),
+        weightUnit: currentUnit,
         reps: last ? last.reps : 10,
         durationSeconds: 0,
         timerRunning: false,
@@ -164,8 +174,9 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
   const handleRemoveSet = (exId, setId) => {
     const updatedExercises = currentWorkout.exercises.map(ex => {
       if (ex.id !== exId) return ex;
-      const sets = ex.sets.filter(s => s.id !== setId).map((s, idx) => ({ ...s, setNum: idx + 1 }));
-      return { ...ex, sets };
+      const filtered = ex.sets.filter(s => s.id !== setId);
+      const renumbered = filtered.map((s, idx) => ({ ...s, setNum: idx + 1 }));
+      return { ...ex, sets: renumbered };
     });
 
     const updated = { ...currentWorkout, exercises: updatedExercises };
@@ -173,11 +184,16 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
     saveWorkout(updated, activeProfileId);
   };
 
-  const handleSetChange = (exId, setId, field, val) => {
+  const handleSetChange = (exId, setId, field, value) => {
     const updatedExercises = currentWorkout.exercises.map(ex => {
       if (ex.id !== exId) return ex;
-      const sets = ex.sets.map(s => s.id === setId ? { ...s, [field]: val } : s);
-      return { ...ex, sets };
+      return {
+        ...ex,
+        sets: ex.sets.map(set => {
+          if (set.id !== setId) return set;
+          return { ...set, [field]: value };
+        })
+      };
     });
 
     const updated = { ...currentWorkout, exercises: updatedExercises };
@@ -185,41 +201,73 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
     saveWorkout(updated, activeProfileId);
   };
 
-  // Persistent Set Timer (Timestamp based - survives refresh & mobile lock)
+  // Toggle Weight Unit for entire exercise (KG vs BLOCKS)
+  const handleToggleExWeightUnit = (exId, newUnit) => {
+    const updatedExercises = currentWorkout.exercises.map(ex => {
+      if (ex.id !== exId) return ex;
+      return {
+        ...ex,
+        weightUnit: newUnit,
+        sets: ex.sets.map(s => ({ ...s, weightUnit: newUnit }))
+      };
+    });
+
+    const updated = { ...currentWorkout, exercises: updatedExercises };
+    setCurrentWorkout(updated);
+    saveWorkout(updated, activeProfileId);
+  };
+
+  // Toggle Weight Unit for a single set
+  const handleToggleSetWeightUnit = (exId, setId) => {
+    const updatedExercises = currentWorkout.exercises.map(ex => {
+      if (ex.id !== exId) return ex;
+      return {
+        ...ex,
+        sets: ex.sets.map(s => {
+          if (s.id !== setId) return s;
+          const cur = s.weightUnit || ex.weightUnit || unit;
+          const nextUnit = cur === 'blocks' ? 'kg' : 'blocks';
+          return { ...s, weightUnit: nextUnit };
+        })
+      };
+    });
+
+    const updated = { ...currentWorkout, exercises: updatedExercises };
+    setCurrentWorkout(updated);
+    saveWorkout(updated, activeProfileId);
+  };
+
+  // Persistent Set Timer toggle
   const handleToggleSetTimer = (exId, set) => {
+    const now = Date.now();
     const isCurrentlyRunning = Boolean(set.timerRunning);
-    let updatedDuration = set.durationSeconds || 0;
-    let newRunning = false;
+    let newRunning = !isCurrentlyRunning;
+    let newDuration = Number(set.durationSeconds) || 0;
     let newStartTime = null;
 
     if (isCurrentlyRunning) {
-      // Pause: commit elapsed seconds since timerStartTime
       if (set.timerStartTime) {
-        const delta = Math.floor((Date.now() - set.timerStartTime) / 1000);
-        updatedDuration += Math.max(0, delta);
+        newDuration += Math.floor((now - set.timerStartTime) / 1000);
       }
-      newRunning = false;
       newStartTime = null;
     } else {
-      // Start: record current timestamp
-      newRunning = true;
-      newStartTime = Date.now();
+      newStartTime = now;
     }
 
     const updatedExercises = currentWorkout.exercises.map(ex => {
       if (ex.id !== exId) return ex;
-      const sets = ex.sets.map(s => {
-        if (s.id === set.id) {
+      return {
+        ...ex,
+        sets: ex.sets.map(s => {
+          if (s.id !== set.id) return s;
           return {
             ...s,
-            durationSeconds: updatedDuration,
             timerRunning: newRunning,
+            durationSeconds: newDuration,
             timerStartTime: newStartTime
           };
-        }
-        return s;
-      });
-      return { ...ex, sets };
+        })
+      };
     });
 
     const updated = { ...currentWorkout, exercises: updatedExercises };
@@ -227,47 +275,41 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
     saveWorkout(updated, activeProfileId);
   };
 
-  const handleResetSetTimer = (exId, setId) => {
-    const updatedExercises = currentWorkout.exercises.map(ex => {
-      if (ex.id !== exId) return ex;
-      const sets = ex.sets.map(s => {
-        if (s.id === setId) {
-          return { ...s, durationSeconds: 0, timerRunning: false, timerStartTime: null };
-        }
-        return s;
-      });
-      return { ...ex, sets };
-    });
-
-    const updated = { ...currentWorkout, exercises: updatedExercises };
-    setCurrentWorkout(updated);
-    saveWorkout(updated, activeProfileId);
+  const getLiveSetSeconds = (set) => {
+    let sec = Number(set.durationSeconds) || 0;
+    if (set.timerRunning && set.timerStartTime) {
+      sec += Math.floor((Date.now() - set.timerStartTime) / 1000);
+    }
+    return sec;
   };
 
   const handleToggleComplete = (exerciseLog, set) => {
     const isNowDone = !set.completed;
-    
-    // Stop set timer if running and calculate final duration
-    let finalDuration = set.durationSeconds || 0;
+    const now = Date.now();
+
+    let finalDuration = Number(set.durationSeconds) || 0;
     if (set.timerRunning && set.timerStartTime) {
-      finalDuration += Math.max(0, Math.floor((Date.now() - set.timerStartTime) / 1000));
+      finalDuration += Math.floor((now - set.timerStartTime) / 1000);
     }
+
+    const currentUnit = set.weightUnit || exerciseLog.weightUnit || unit;
 
     const updatedExercises = currentWorkout.exercises.map(ex => {
       if (ex.id !== exerciseLog.id) return ex;
-      const sets = ex.sets.map(s => {
-        if (s.id === set.id) {
+      return {
+        ...ex,
+        sets: ex.sets.map(s => {
+          if (s.id !== set.id) return s;
           return {
             ...s,
             completed: isNowDone,
             durationSeconds: finalDuration,
             timerRunning: false,
-            timerStartTime: null
+            timerStartTime: null,
+            weightUnit: currentUnit
           };
-        }
-        return s;
-      });
-      return { ...ex, sets };
+        })
+      };
     });
 
     const updated = { ...currentWorkout, exercises: updatedExercises };
@@ -286,16 +328,7 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
     }
   };
 
-  // Get current live duration of set including real-time delta
-  const getLiveSetSeconds = (set) => {
-    let sec = set.durationSeconds || 0;
-    if (set.timerRunning && set.timerStartTime) {
-      sec += Math.max(0, Math.floor((Date.now() - set.timerStartTime) / 1000));
-    }
-    return sec;
-  };
-
-  const formatSetTime = (sec = 0) => {
+  const formatSetTime = (sec) => {
     const m = Math.floor(sec / 60);
     const s = sec % 60;
     if (m > 0) return `${m}m ${s}s`;
@@ -305,9 +338,11 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
   const allExercisesList = getAllExercises();
   const filteredPicker = allExercisesList.filter(ex => {
     const matchMuscle = pickerFilter === 'all' || ex.muscle === pickerFilter;
+    const matchEquipment = equipmentFilter === 'all' || ex.equipment === equipmentFilter;
     const matchSearch = ex.name.toLowerCase().includes(pickerSearch.toLowerCase()) || 
-                        (ex.muscle || '').toLowerCase().includes(pickerSearch.toLowerCase());
-    return matchMuscle && matchSearch;
+                        (ex.muscle || '').toLowerCase().includes(pickerSearch.toLowerCase()) ||
+                        (ex.equipment || '').toLowerCase().includes(pickerSearch.toLowerCase());
+    return matchMuscle && matchEquipment && matchSearch;
   });
 
   return (
@@ -378,98 +413,122 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
         </div>
       </div>
 
-      {/* 4. Workout Exercises Section */}
+      {/* 4. Logged Exercises Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between">
           <span className="text-xs font-black uppercase text-slate-300">
-            2. Log Sets & Exercises
+            2. Exercises & Sets ({currentWorkout?.exercises?.length || 0})
           </span>
 
           <button
-            onClick={() => {
-              setPickerFilter('all');
-              setPickerSearch('');
-              setShowPicker(true);
-            }}
-            className="btn-pro-primary text-xs py-2 px-4 flex items-center gap-1.5"
+            onClick={() => { setPickerSearch(''); setShowPicker(true); }}
+            className="btn-pro-primary text-xs py-2 px-3.5 flex items-center gap-1.5 shadow-glow-red"
           >
             <Plus className="w-4 h-4" /> Add Exercise
           </button>
         </div>
 
         {(!currentWorkout?.exercises || currentWorkout.exercises.length === 0) ? (
-          <div className="pro-card p-10 text-center border-dashed border-slate-800 space-y-3">
-            <div className="w-14 h-14 rounded-2xl bg-slate-900 mx-auto flex items-center justify-center text-slate-600">
-              <Dumbbell className="w-7 h-7 -rotate-45" />
+          <div className="pro-card p-8 border-dashed border-slate-800 text-center space-y-3">
+            <div className="w-12 h-12 rounded-2xl bg-fitrex-red/10 border border-fitrex-red/30 flex items-center justify-center mx-auto text-fitrex-red">
+              <Dumbbell className="w-6 h-6" />
             </div>
-            <h3 className="text-base font-bold text-white">No exercises added yet</h3>
-            <p className="text-xs text-slate-400 max-w-xs mx-auto">
-              Tap the button below to browse all exercises with videos and photos.
+            <h4 className="text-sm font-bold text-white">No exercises logged for this day</h4>
+            <p className="text-xs text-slate-400 max-w-sm mx-auto">
+              Tap "Add Exercise" above to pick from 100+ movements including machines, dumbbells, cables, and barbells.
             </p>
             <button
-              onClick={() => {
-                setPickerFilter('all');
-                setPickerSearch('');
-                setShowPicker(true);
-              }}
-              className="btn-pro-primary text-xs py-2 px-4"
+              onClick={() => { setPickerSearch(''); setShowPicker(true); }}
+              className="btn-pro-primary text-xs py-2 px-4 inline-flex items-center gap-1.5"
             >
-              <Plus className="w-4 h-4" /> Browse Exercises
+              <Plus className="w-4 h-4" /> Browse 100+ Exercises
             </button>
           </div>
         ) : (
-          currentWorkout.exercises.map((exLog, exIdx) => {
-            const pr = personalRecords[exLog.name];
+          currentWorkout.exercises.map((exLog) => {
+            const exUnit = exLog.weightUnit || unit;
             return (
-              <div key={exLog.id} className="pro-card p-4 sm:p-5 border-slate-800 space-y-3 shadow-lg">
+              <div key={exLog.id} className="pro-card p-4 sm:p-5 border-slate-800 space-y-4">
                 
                 {/* Exercise Header */}
-                <div className="flex items-center justify-between gap-3 pb-3 border-b border-slate-800/80">
-                  <div className="flex items-center gap-3 min-w-0">
-                    {exLog.photoUrl && (
-                      <img
-                        src={exLog.photoUrl}
-                        alt={exLog.name}
-                        className="w-12 h-12 rounded-xl object-cover border border-slate-700 shrink-0"
-                      />
-                    )}
-                    <div className="min-w-0">
-                      <h4 className="text-base font-black text-white truncate flex items-center gap-1.5">
+                <div className="flex items-center justify-between gap-3">
+                  <div className="flex items-center gap-2.5">
+                    <div className="w-9 h-9 rounded-xl bg-fitrex-red/15 border border-fitrex-red/40 flex items-center justify-center text-fitrex-red shrink-0">
+                      <Dumbbell className="w-4 h-4" />
+                    </div>
+                    <div>
+                      <h4 className="text-sm sm:text-base font-black text-white flex items-center gap-2">
                         {exLog.name}
-                        {pr && pr.maxWeight > 0 && (
-                          <span className="text-[10px] bg-amber-500/15 text-amber-400 px-2 py-0.5 rounded-full font-bold">
-                            PR: {pr.maxWeight} {unit}
-                          </span>
-                        )}
+                        <span className="text-[10px] font-bold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 uppercase">
+                          {exLog.muscle}
+                        </span>
                       </h4>
-                      <span className="text-[11px] font-bold text-fitrex-red uppercase">
-                        {exLog.muscle}
-                      </span>
+                      {personalRecords[exLog.name]?.maxWeight > 0 && (
+                        <span className="text-[10px] text-amber-400 font-bold flex items-center gap-1">
+                          <Flame className="w-3 h-3 fill-current" /> All-Time PR: {personalRecords[exLog.name].maxWeight} {personalRecords[exLog.name].unit || unit}
+                        </span>
+                      )}
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-1.5 shrink-0">
+                  <div className="flex items-center gap-1.5">
+                    
+                    {/* Weight Unit Selector: KG vs BLOCKS */}
+                    <div className="flex items-center bg-slate-950 p-0.5 rounded-lg border border-slate-800" title="Switch weight unit between KG and Number of Blocks / Pin Stack">
+                      <button
+                        type="button"
+                        onClick={() => handleToggleExWeightUnit(exLog.id, 'kg')}
+                        className={`px-2 py-1 rounded text-[10px] font-black transition-all ${
+                          exUnit === 'kg'
+                            ? 'bg-fitrex-red text-white shadow-glow-red'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        KG
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => handleToggleExWeightUnit(exLog.id, 'blocks')}
+                        className={`px-2 py-1 rounded text-[10px] font-black transition-all ${
+                          exUnit === 'blocks'
+                            ? 'bg-fitrex-red text-white shadow-glow-red'
+                            : 'text-slate-400 hover:text-white'
+                        }`}
+                      >
+                        BLOCKS
+                      </button>
+                    </div>
+
+                    {/* Guide Modal Button */}
                     <button
+                      type="button"
                       onClick={() => setSelectedExerciseForModal(exLog)}
-                      className="px-2.5 py-1.5 rounded-xl bg-slate-900 border border-slate-800 text-fitrex-red text-xs font-bold flex items-center gap-1 hover:bg-slate-800 transition-colors"
+                      className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-fitrex-red hover:text-white hover:border-fitrex-red transition-colors"
+                      title="Posture & Video Guide"
                     >
-                      <Video className="w-3.5 h-3.5" /> Watch Form
+                      <Video className="w-4 h-4" />
                     </button>
+
+                    {/* Delete Exercise */}
                     <button
+                      type="button"
                       onClick={() => handleRemoveExercise(exLog.id)}
-                      className="p-2 text-slate-500 hover:text-rose-400 rounded-xl transition-colors"
-                      title="Remove exercise"
+                      className="p-1.5 rounded-lg bg-slate-900 border border-slate-800 text-slate-500 hover:text-rose-400 transition-colors"
+                      title="Remove Exercise"
                     >
                       <Trash2 className="w-4 h-4" />
                     </button>
                   </div>
                 </div>
 
-                {/* Sets List with Timestamp-based Persistent Set Timers */}
-                <div className="space-y-2 pt-1">
+                {/* Sets Table */}
+                <div className="space-y-2.5">
                   {(exLog.sets || []).map((set) => {
                     const liveSeconds = getLiveSetSeconds(set);
                     const isRunning = Boolean(set.timerRunning);
+                    const setUnit = set.weightUnit || exLog.weightUnit || unit;
+                    const isBlocks = setUnit === 'blocks';
+
                     return (
                       <div
                         key={set.id}
@@ -486,16 +545,28 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                           {set.setNum}
                         </div>
 
-                        {/* Weight */}
-                        <div className="flex-1 min-w-[75px] sm:min-w-[100px]">
-                          <label className="text-[10px] text-slate-400 font-bold uppercase block mb-0.5">
-                            Weight ({unit})
-                          </label>
+                        {/* Weight (kg or Blocks) */}
+                        <div className="flex-1 min-w-[85px] sm:min-w-[110px]">
+                          <div className="flex items-center justify-between mb-0.5">
+                            <label className="text-[10px] text-slate-400 font-bold uppercase block">
+                              {isBlocks ? 'Blocks / Pin' : `Weight (${unit})`}
+                            </label>
+                            <button
+                              type="button"
+                              onClick={() => handleToggleSetWeightUnit(exLog.id, set.id)}
+                              className="text-[9px] font-black px-1.5 py-0.5 rounded bg-slate-800 hover:bg-slate-700 text-fitrex-red border border-slate-700 leading-none"
+                              title="Click to switch between kg and weight blocks"
+                            >
+                              {isBlocks ? 'Blocks' : 'kg'}
+                            </button>
+                          </div>
+                          
                           <input
                             type="number"
-                            step="0.5"
+                            step={isBlocks ? '1' : '0.5'}
                             value={set.weight}
                             onChange={e => handleSetChange(exLog.id, set.id, 'weight', e.target.value)}
+                            placeholder={isBlocks ? 'e.g. 8' : '40'}
                             className="w-full input-pro py-1 px-2 text-center text-sm font-black mono-num"
                           />
                           {set.previous && (
@@ -591,14 +662,14 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
           <div className="w-full max-w-2xl pro-card border-slate-700 max-h-[90vh] flex flex-col shadow-2xl overflow-hidden bg-[#090e1a]">
             
-            {/* FIXED TOP HEADER & FILTER BAR */}
-            <div className="p-4 sm:p-5 border-b border-slate-800 bg-[#090e1a] shrink-0 space-y-3">
+            {/* FIXED TOP HEADER & STICKY FILTER BAR */}
+            <div className="p-4 sm:p-5 border-b border-slate-800 bg-[#090e1a] shrink-0 space-y-3 z-30">
               <div className="flex items-center justify-between">
                 <div>
                   <h3 className="text-lg font-black text-white flex items-center gap-2">
                     <Dumbbell className="w-5 h-5 text-fitrex-red" /> Exercise Library ({filteredPicker.length})
                   </h3>
-                  <p className="text-xs text-slate-400">Tap any movement to add to your workout</p>
+                  <p className="text-xs text-slate-400">Tap any movement to add to your workout ({allExercisesList.length} total available)</p>
                 </div>
                 <button
                   onClick={() => setShowPicker(false)}
@@ -613,7 +684,7 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Search shoulder press, squat, lat pull, hammer curl..."
+                  placeholder="Search 100+ exercises (shoulder press, squat, lat pull, hammer curl, pushups)..."
                   value={pickerSearch}
                   onChange={e => setPickerSearch(e.target.value)}
                   className="w-full input-pro pl-10 text-xs py-2.5"
@@ -621,7 +692,7 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                 />
               </div>
 
-              {/* STICKY HORIZONTAL FILTER BAR - NEVER CLIPPED */}
+              {/* STICKY HORIZONTAL MUSCLE FILTER BAR */}
               <div className="flex items-center gap-1.5 overflow-x-auto pb-1 pt-1 no-scrollbar scroll-smooth">
                 <button
                   onClick={() => setPickerFilter('all')}
@@ -631,7 +702,7 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                       : 'bg-slate-900 text-slate-300 hover:text-white border border-slate-800'
                   }`}
                 >
-                  All ({allExercisesList.length})
+                  All Muscles ({allExercisesList.length})
                 </button>
 
                 {MUSCLE_GROUPS.map(m => (
@@ -648,56 +719,67 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                   </button>
                 ))}
               </div>
+
+              {/* EQUIPMENT FILTER BAR */}
+              <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar scroll-smooth">
+                {EQUIPMENT_LIST.map(eq => (
+                  <button
+                    key={eq.id}
+                    onClick={() => setEquipmentFilter(eq.id)}
+                    className={`px-2.5 py-1 rounded-lg text-[11px] font-bold whitespace-nowrap shrink-0 transition-all ${
+                      equipmentFilter === eq.id
+                        ? 'bg-slate-700 text-white border border-slate-500'
+                        : 'bg-slate-950 text-slate-400 hover:text-slate-200 border border-slate-800'
+                    }`}
+                  >
+                    {eq.name}
+                  </button>
+                ))}
+              </div>
             </div>
 
-            {/* SCROLLABLE EXERCISES LIST */}
-            <div className="flex-1 overflow-y-auto p-4 space-y-2.5">
+            {/* SCROLLABLE EXERCISE LIST */}
+            <div className="p-4 sm:p-5 overflow-y-auto space-y-2.5 flex-1 divide-y divide-slate-800/60">
               {filteredPicker.length === 0 ? (
-                <div className="text-center py-10 text-slate-400 text-xs">
-                  No exercises matched your search. Try another keyword.
+                <div className="text-center py-12 text-slate-400 text-xs">
+                  No movements found matching "{pickerSearch}". Try another muscle or search keyword.
                 </div>
               ) : (
-                filteredPicker.map(ex => (
+                filteredPicker.map((ex) => (
                   <div
                     key={ex.id}
-                    className="p-3 rounded-2xl bg-slate-900/80 border border-slate-800 hover:border-fitrex-red/50 flex items-center justify-between gap-3 group transition-all"
+                    onClick={() => handleAddExercise(ex)}
+                    className="pt-2.5 first:pt-0 flex items-center justify-between p-3 rounded-xl hover:bg-slate-800/40 cursor-pointer border border-transparent hover:border-slate-800 transition-all group"
                   >
-                    <div className="flex items-center gap-3 min-w-0">
-                      <img
-                        src={ex.photoUrl || 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=200&auto=format&fit=crop&q=80'}
-                        alt={ex.name}
-                        className="w-14 h-14 rounded-xl object-cover border border-slate-700 shrink-0"
-                      />
-                      <div className="min-w-0">
-                        <span className="text-[10px] font-black uppercase text-fitrex-red">
-                          {ex.muscle}
-                        </span>
-                        <h4 className="text-sm font-black text-white group-hover:text-fitrex-red truncate">
+                    <div className="flex items-center gap-3">
+                      <div className="w-12 h-12 rounded-xl bg-slate-900 overflow-hidden shrink-0 border border-slate-800 group-hover:border-fitrex-red/40 transition-colors">
+                        <img
+                          src={ex.photoUrl || 'https://images.unsplash.com/photo-1534438327276-14e5300c3a48?w=200&auto=format&fit=crop&q=80'}
+                          alt={ex.name}
+                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-300"
+                        />
+                      </div>
+                      <div>
+                        <h4 className="text-sm font-bold text-white group-hover:text-fitrex-red transition-colors flex items-center gap-2">
                           {ex.name}
+                          {ex.defaultUnit === 'blocks' && (
+                            <span className="text-[9px] px-1.5 py-0.2 rounded bg-amber-500/20 text-amber-400 border border-amber-500/30">
+                              Blocks / Stack
+                            </span>
+                          )}
                         </h4>
-                        <p className="text-[11px] text-slate-400 line-clamp-1 mt-0.5">
-                          {ex.cues?.[0] || 'Standard exercise with posture guidance'}
-                        </p>
+                        <span className="text-[11px] text-slate-400 uppercase font-semibold">
+                          {ex.muscle} • {ex.equipment || 'Gym'}
+                        </span>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
-                      <button
-                        type="button"
-                        onClick={() => setSelectedExerciseForModal(ex)}
-                        className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 hover:text-fitrex-red transition-colors"
-                        title="Watch demonstration video"
-                      >
-                        <Video className="w-4 h-4 text-fitrex-red" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => handleAddExercise(ex)}
-                        className="btn-pro-primary text-xs py-2 px-3.5"
-                      >
-                        Add +
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      className="px-3 py-1.5 rounded-xl bg-fitrex-red/10 group-hover:bg-fitrex-red text-fitrex-red group-hover:text-white border border-fitrex-red/30 text-xs font-black transition-all shadow-sm"
+                    >
+                      Select +
+                    </button>
                   </div>
                 ))
               )}
@@ -707,7 +789,7 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
         </div>
       )}
 
-      {/* Posture Video Modal */}
+      {/* 6. Posture Guide Modal */}
       <PostureModal
         exercise={selectedExerciseForModal}
         isOpen={!!selectedExerciseForModal}
