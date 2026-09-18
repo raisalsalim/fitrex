@@ -2,17 +2,17 @@
 
 @theme {
   --color-fitrex-dark: #05070d;
-  --color-fitrex-darker: #030407;
-  --color-fitrex-surface: #0a0f1d;
-  --color-fitrex-card: #0f172a;
-  --color-fitrex-cardHover: #15203b;
+  --color-fitrex-darker: #020305;
+  --color-fitrex-surface: #0a0e18;
+  --color-fitrex-card: #0e1424;
+  --color-fitrex-cardHover: #141d33;
   --color-fitrex-border: rgba(255, 255, 255, 0.08);
-  --color-fitrex-lime: #a3e635;
-  --color-fitrex-limeGlow: rgba(163, 230, 53, 0.25);
-  --color-fitrex-emerald: #10b981;
-  --color-fitrex-cyan: #06b6d4;
+  --color-fitrex-red: #ef4444;
+  --color-fitrex-redLight: #f87171;
+  --color-fitrex-redDark: #dc2626;
+  --color-fitrex-redGlow: rgba(239, 68, 68, 0.35);
   --color-fitrex-amber: #f59e0b;
-  --color-fitrex-rose: #f43f5e;
+  --color-fitrex-cyan: #06b6d4;
   --color-fitrex-purple: #a855f7;
 
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
@@ -21,14 +21,13 @@
 
 :root {
   --bg-main: #05070d;
-  --bg-surface: #0a0f1d;
-  --bg-card: #0e1526;
-  --bg-card-hover: #141e36;
+  --bg-surface: #0a0e18;
+  --bg-card: #0e1424;
+  --bg-card-hover: #141d33;
   --border-subtle: rgba(255, 255, 255, 0.08);
-  --border-glow: rgba(163, 230, 53, 0.35);
-  --accent-lime: #a3e635;
-  --accent-emerald: #10b981;
-  --accent-cyan: #06b6d4;
+  --border-glow: rgba(239, 68, 68, 0.4);
+  --accent-red: #ef4444;
+  --accent-red-glow: rgba(239, 68, 68, 0.35);
   --font-sans: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, sans-serif;
   --font-mono: 'JetBrains Mono', monospace;
 }
@@ -40,9 +39,9 @@ html, body {
   min-height: 100vh;
   overflow-x: hidden;
   background-image: 
-    radial-gradient(at 0% 0%, rgba(163, 230, 53, 0.05) 0px, transparent 50%),
-    radial-gradient(at 100% 0%, rgba(6, 182, 212, 0.05) 0px, transparent 50%),
-    radial-gradient(at 50% 100%, rgba(168, 85, 247, 0.04) 0px, transparent 50%);
+    radial-gradient(at 0% 0%, rgba(239, 68, 68, 0.07) 0px, transparent 50%),
+    radial-gradient(at 100% 0%, rgba(220, 38, 38, 0.05) 0px, transparent 50%),
+    radial-gradient(at 50% 100%, rgba(153, 27, 27, 0.05) 0px, transparent 50%);
   background-attachment: fixed;
 }
 
@@ -59,12 +58,12 @@ html, body {
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: #334155;
+  background: #dc2626;
 }
 
-/* Glassmorphic Luxury Cards */
+/* Glassmorphic Luxury Cards - Black & Red */
 .pro-card {
-  background: linear-gradient(145deg, rgba(15, 22, 40, 0.9) 0%, rgba(9, 14, 26, 0.9) 100%);
+  background: linear-gradient(145deg, rgba(14, 20, 36, 0.92) 0%, rgba(8, 12, 22, 0.92) 100%);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
   border: 1px solid rgba(255, 255, 255, 0.08);
@@ -81,23 +80,23 @@ html, body {
   left: 0;
   right: 0;
   height: 1px;
-  background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.15), transparent);
+  background: linear-gradient(90deg, transparent, rgba(239, 68, 68, 0.35), transparent);
 }
 
 .pro-card:hover {
-  border-color: rgba(255, 255, 255, 0.16);
-  box-shadow: 0 12px 35px -10px rgba(0, 0, 0, 0.5);
+  border-color: rgba(239, 68, 68, 0.25);
+  box-shadow: 0 12px 35px -10px rgba(0, 0, 0, 0.6);
 }
 
 .pro-card-glow:hover {
-  border-color: rgba(163, 230, 53, 0.4);
-  box-shadow: 0 12px 35px -8px rgba(163, 230, 53, 0.15);
+  border-color: rgba(239, 68, 68, 0.5);
+  box-shadow: 0 12px 35px -8px rgba(239, 68, 68, 0.25);
 }
 
 /* Buttons */
 .btn-pro-primary {
-  background: linear-gradient(135deg, #a3e635 0%, #84cc16 60%, #65a30d 100%);
-  color: #030712;
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 60%, #b91c1c 100%);
+  color: #ffffff;
   font-weight: 800;
   letter-spacing: -0.01em;
   border-radius: 14px;
@@ -109,12 +108,12 @@ html, body {
   transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   border: none;
   cursor: pointer;
-  box-shadow: 0 4px 20px -2px rgba(163, 230, 53, 0.4);
+  box-shadow: 0 4px 20px -2px rgba(239, 68, 68, 0.5);
 }
 .btn-pro-primary:hover {
-  filter: brightness(1.08);
+  filter: brightness(1.1);
   transform: translateY(-1.5px);
-  box-shadow: 0 6px 24px -1px rgba(163, 230, 53, 0.55);
+  box-shadow: 0 6px 24px -1px rgba(239, 68, 68, 0.65);
 }
 .btn-pro-primary:active {
   transform: translateY(0);
@@ -135,15 +134,16 @@ html, body {
   cursor: pointer;
 }
 .btn-pro-secondary:hover {
-  background: rgba(255, 255, 255, 0.08);
-  border-color: rgba(255, 255, 255, 0.18);
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.4);
+  color: #fecaca;
   transform: translateY(-0.5px);
 }
 
 /* Input Fields */
 .input-pro {
-  background: rgba(10, 15, 29, 0.85);
-  border: 1px solid rgba(255, 255, 255, 0.09);
+  background: rgba(10, 14, 26, 0.9);
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 12px;
   color: #ffffff;
   padding: 8px 12px;
@@ -151,9 +151,9 @@ html, body {
   outline: none;
 }
 .input-pro:focus {
-  border-color: #a3e635;
-  box-shadow: 0 0 0 3px rgba(163, 230, 53, 0.2);
-  background: rgba(15, 23, 42, 0.95);
+  border-color: #ef4444;
+  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.25);
+  background: rgba(15, 20, 36, 0.98);
 }
 
 .mono-num {
@@ -161,14 +161,8 @@ html, body {
   font-variant-numeric: tabular-nums;
 }
 
-.shadow-glow-lime {
-  box-shadow: 0 0 25px -5px rgba(163, 230, 53, 0.3);
-}
-.shadow-glow-cyan {
-  box-shadow: 0 0 25px -5px rgba(6, 182, 212, 0.3);
-}
-.shadow-glow-purple {
-  box-shadow: 0 0 25px -5px rgba(168, 85, 247, 0.3);
+.shadow-glow-red {
+  box-shadow: 0 0 25px -4px rgba(239, 68, 68, 0.45);
 }
 
 @keyframes shakeKeypad {

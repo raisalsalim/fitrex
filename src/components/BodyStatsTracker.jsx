@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Activity, Scale, TrendingDown, TrendingUp, Plus, Trash2, Calendar, Check, AlertCircle, ShieldCheck } from 'lucide-react';
+import { Activity, Scale, TrendingDown, TrendingUp, Plus, Trash2, Check } from 'lucide-react';
 import { getBodyMetrics, saveBodyMetric, deleteBodyMetric, getSettings } from '../services/storage';
 
 export default function BodyStatsTracker({ activeProfileId }) {
@@ -55,7 +55,7 @@ export default function BodyStatsTracker({ activeProfileId }) {
   const getBmiCategory = (bmi) => {
     if (!bmi) return { label: 'Unknown', color: 'text-slate-400', bg: 'bg-slate-800' };
     if (bmi < 18.5) return { label: 'Underweight', color: 'text-cyan-400', bg: 'bg-cyan-500/20' };
-    if (bmi < 25) return { label: 'Normal / Healthy', color: 'text-fitrex-lime', bg: 'bg-fitrex-lime/20' };
+    if (bmi < 25) return { label: 'Normal / Healthy', color: 'text-fitrex-red', bg: 'bg-fitrex-red/20' };
     if (bmi < 30) return { label: 'Overweight', color: 'text-amber-400', bg: 'bg-amber-500/20' };
     return { label: 'Obese', color: 'text-rose-400', bg: 'bg-rose-500/20' };
   };
@@ -67,19 +67,19 @@ export default function BodyStatsTracker({ activeProfileId }) {
   const minWeight = sortedByDate.length > 0 ? Math.min(...sortedByDate.map(m => m.weight)) : 0;
   const maxWeight = sortedByDate.length > 0 ? Math.max(...sortedByDate.map(m => m.weight)) : 0;
 
-  // Responsive SVG Trend Chart
+  // Red Theme SVG Line Chart
   const renderWeightChart = () => {
     if (sortedByDate.length < 2) {
       return (
-        <div className="h-52 flex items-center justify-center text-xs text-slate-500 text-center border border-dashed border-slate-800 rounded-2xl p-6">
-          Log at least 2 body weight measurements to view your high-resolution progress curve.
+        <div className="h-48 flex items-center justify-center text-xs text-slate-500 text-center border border-dashed border-slate-800 rounded-2xl p-6">
+          Log at least 2 body weight measurements to view your progress curve.
         </div>
       );
     }
 
     const padding = 35;
     const width = 600;
-    const height = 210;
+    const height = 200;
     const weights = sortedByDate.map(d => d.weight);
     const minW = Math.min(...weights) - 1;
     const maxW = Math.max(...weights) + 1;
@@ -95,15 +95,14 @@ export default function BodyStatsTracker({ activeProfileId }) {
 
     return (
       <div className="w-full overflow-x-auto">
-        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-52 sm:h-60">
+        <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-48 sm:h-56">
           <defs>
-            <linearGradient id="bodyWeightGrad" x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor="#a3e635" stopOpacity="0.35" />
-              <stop offset="100%" stopColor="#a3e635" stopOpacity="0.0" />
+            <linearGradient id="bodyWeightGradRed" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor="#ef4444" stopOpacity="0.35" />
+              <stop offset="100%" stopColor="#ef4444" stopOpacity="0.0" />
             </linearGradient>
           </defs>
 
-          {/* Grid */}
           {[0, 0.5, 1].map((ratio, idx) => {
             const y = height - padding - ratio * (height - 2 * padding);
             const val = (minW + ratio * rangeW).toFixed(1);
@@ -119,22 +118,22 @@ export default function BodyStatsTracker({ activeProfileId }) {
 
           <path
             d={`${pathD} L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`}
-            fill="url(#bodyWeightGrad)"
+            fill="url(#bodyWeightGradRed)"
           />
 
           <path
             d={pathD}
             fill="none"
-            stroke="#a3e635"
+            stroke="#ef4444"
             strokeWidth="3.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{ filter: 'drop-shadow(0 4px 10px rgba(163, 230, 53, 0.4))' }}
+            style={{ filter: 'drop-shadow(0 4px 10px rgba(239, 68, 68, 0.5))' }}
           />
 
           {points.map((p, i) => (
             <g key={i}>
-              <circle cx={p.x} cy={p.y} r="4.5" fill="#05070d" stroke="#a3e635" strokeWidth="3" />
+              <circle cx={p.x} cy={p.y} r="4.5" fill="#05070d" stroke="#ef4444" strokeWidth="3" />
               <text
                 x={p.x}
                 y={p.y - 10}
@@ -158,25 +157,23 @@ export default function BodyStatsTracker({ activeProfileId }) {
   return (
     <div className="space-y-6 pb-24 max-w-4xl mx-auto">
       
-      {/* Overview Metric Cards */}
+      {/* Metric Cards */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3.5">
         <div className="pro-card p-4 border-slate-800">
           <span className="text-[11px] text-slate-400 uppercase font-black block mb-1">Current Weight</span>
           <span className="text-2xl font-black text-white mono-num">
             {currentEntry ? `${currentEntry.weight} ${unit}` : '--'}
           </span>
-          <span className="text-[10px] text-slate-500 mt-0.5 block">Last logged measurement</span>
         </div>
 
         <div className="pro-card p-4 border-slate-800">
           <span className="text-[11px] text-slate-400 uppercase font-black block mb-1">Net Change</span>
           <span className={`text-2xl font-black mono-num flex items-center gap-1 ${
-            totalChange < 0 ? 'text-fitrex-lime' : totalChange > 0 ? 'text-amber-400' : 'text-slate-300'
+            totalChange < 0 ? 'text-fitrex-red' : totalChange > 0 ? 'text-amber-400' : 'text-slate-300'
           }`}>
             {totalChange < 0 ? <TrendingDown className="w-5 h-5" /> : totalChange > 0 ? <TrendingUp className="w-5 h-5" /> : null}
             {totalChange > 0 ? `+${totalChange}` : totalChange} {unit}
           </span>
-          <span className="text-[10px] text-slate-500 mt-0.5 block">From starting weight</span>
         </div>
 
         <div className="pro-card p-4 border-slate-800">
@@ -184,11 +181,10 @@ export default function BodyStatsTracker({ activeProfileId }) {
           <span className="text-sm font-black text-white mono-num mt-1 block">
             {minWeight ? `${minWeight} - ${maxWeight} ${unit}` : '--'}
           </span>
-          <span className="text-[10px] text-slate-500 mt-0.5 block">Historical span</span>
         </div>
 
         <div className="pro-card p-4 border-slate-800">
-          <span className="text-[11px] text-slate-400 uppercase font-black block mb-1">BMI Classification</span>
+          <span className="text-[11px] text-slate-400 uppercase font-black block mb-1">BMI</span>
           <div className="flex items-center gap-2">
             <span className="text-2xl font-black text-white mono-num">
               {currentEntry?.bmi || '--'}
@@ -199,7 +195,6 @@ export default function BodyStatsTracker({ activeProfileId }) {
               </span>
             )}
           </div>
-          <span className="text-[10px] text-slate-500 mt-0.5 block">Body Mass Index</span>
         </div>
       </div>
 
@@ -207,17 +202,17 @@ export default function BodyStatsTracker({ activeProfileId }) {
       <div className="pro-card p-6 border-slate-800 space-y-3">
         <div className="flex items-center justify-between">
           <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
-            <Scale className="w-5 h-5 text-fitrex-lime" /> Weight Trajectory
+            <Scale className="w-5 h-5 text-fitrex-red" /> Weight Trajectory
           </h3>
-          <span className="text-xs text-slate-400">{sortedByDate.length} verified logs</span>
+          <span className="text-xs text-slate-400">{sortedByDate.length} logs</span>
         </div>
         {renderWeightChart()}
       </div>
 
-      {/* Log Form */}
+      {/* Form */}
       <div className="pro-card p-6 border-slate-800 space-y-4">
         <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
-          <Plus className="w-5 h-5 text-fitrex-lime" /> Record Body Measurement
+          <Plus className="w-5 h-5 text-fitrex-red" /> Log Body Measurement
         </h3>
 
         <form onSubmit={handleSave} className="grid grid-cols-1 sm:grid-cols-4 gap-3">
@@ -272,7 +267,7 @@ export default function BodyStatsTracker({ activeProfileId }) {
           <div className="sm:col-span-3">
             <input
               type="text"
-              placeholder="Notes (e.g. Morning fasted, pre-workout hydration)..."
+              placeholder="Notes (e.g. Morning fasted)..."
               value={notes}
               onChange={e => setNotes(e.target.value)}
               className="w-full input-pro text-xs py-2.5"
@@ -281,59 +276,10 @@ export default function BodyStatsTracker({ activeProfileId }) {
 
           <div>
             <button type="submit" className="w-full btn-pro-primary text-xs py-2.5">
-              {savedSuccess ? <Check className="w-4 h-4 text-slate-950 font-black" /> : 'Log Measurement'}
+              {savedSuccess ? <Check className="w-4 h-4 text-white font-black" /> : 'Log Measurement'}
             </button>
           </div>
         </form>
-      </div>
-
-      {/* Log History */}
-      <div className="pro-card p-6 border-slate-800 space-y-3">
-        <h3 className="text-sm font-black text-white uppercase tracking-wider">Historical Logs</h3>
-        
-        {metrics.length === 0 ? (
-          <p className="text-xs text-slate-500 text-center py-6">No body measurements recorded yet.</p>
-        ) : (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse">
-              <thead>
-                <tr className="text-[10px] font-black text-slate-400 uppercase tracking-wider border-b border-slate-800">
-                  <th className="py-2.5 px-3">Date</th>
-                  <th className="py-2.5 px-3">Weight</th>
-                  <th className="py-2.5 px-3">Height</th>
-                  <th className="py-2.5 px-3">BMI</th>
-                  <th className="py-2.5 px-3">Notes</th>
-                  <th className="py-2.5 px-2 text-right"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-800/60 text-xs">
-                {metrics.map(m => (
-                  <tr key={m.id} className="hover:bg-slate-900/40">
-                    <td className="py-2.5 px-3 font-bold text-slate-200">{m.date}</td>
-                    <td className="py-2.5 px-3 font-black text-white mono-num">{m.weight} {unit}</td>
-                    <td className="py-2.5 px-3 text-slate-400 mono-num">{m.height ? `${m.height} cm` : '-'}</td>
-                    <td className="py-2.5 px-3">
-                      {m.bmi ? (
-                        <span className={`px-2 py-0.5 rounded text-[10px] font-black mono-num ${getBmiCategory(m.bmi).bg} ${getBmiCategory(m.bmi).color}`}>
-                          {m.bmi} ({getBmiCategory(m.bmi).label})
-                        </span>
-                      ) : '-'}
-                    </td>
-                    <td className="py-2.5 px-3 text-slate-400 truncate max-w-[150px]">{m.notes || '-'}</td>
-                    <td className="py-2.5 px-2 text-right">
-                      <button
-                        onClick={() => handleDelete(m.id)}
-                        className="p-1.5 text-slate-500 hover:text-rose-400 rounded-lg transition-colors"
-                      >
-                        <Trash2 className="w-3.5 h-3.5" />
-                      </button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )}
       </div>
 
     </div>

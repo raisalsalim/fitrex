@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { LineChart, Trophy, TrendingUp, Zap, Calendar, Target, Award, Sparkles, PieChart, Layers } from 'lucide-react';
+import { LineChart, Trophy, TrendingUp, Zap, Target, Award } from 'lucide-react';
 import { getWorkouts, getPersonalRecords, getSettings } from '../services/storage';
 
 export default function AnalyticsView({ activeProfileId }) {
@@ -9,10 +9,9 @@ export default function AnalyticsView({ activeProfileId }) {
   const prs = getPersonalRecords(activeProfileId);
 
   const exerciseNames = Object.keys(prs);
-  const [selectedExercise, setSelectedExercise] = useState(exerciseNames[0] || 'Barbell Bench Press');
-  const [metricTab, setMetricTab] = useState('weight'); // 'weight' | '1rm' | 'volume'
+  const [selectedExercise, setSelectedExercise] = useState(exerciseNames[0] || 'Flat Dumbbell Press');
+  const [metricTab, setMetricTab] = useState('weight');
 
-  // Extract progression points for selected exercise
   const exerciseHistory = [];
   workouts.forEach(w => {
     (w.exercises || []).forEach(ex => {
@@ -41,30 +40,13 @@ export default function AnalyticsView({ activeProfileId }) {
 
   exerciseHistory.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-  // Compute Muscle Volume Distribution for the current profile
-  const muscleVolume = {};
-  workouts.forEach(w => {
-    (w.exercises || []).forEach(ex => {
-      const m = ex.muscle || 'other';
-      (ex.sets || []).forEach(s => {
-        if (s.completed) {
-          const vol = (Number(s.weight) || 0) * (Number(s.reps) || 0);
-          muscleVolume[m] = (muscleVolume[m] || 0) + vol;
-        }
-      });
-    });
-  });
-
-  const totalMuscleVol = Object.values(muscleVolume).reduce((a, b) => a + b, 0) || 1;
-
-  // Render SVG progression chart
-  const renderChart = (key, color, glowColor) => {
+  const renderChart = (key, color) => {
     if (exerciseHistory.length < 2) {
       return (
         <div className="h-52 flex flex-col items-center justify-center text-xs text-slate-500 text-center p-6 border border-dashed border-slate-800 rounded-2xl">
           <TrendingUp className="w-8 h-8 text-slate-600 mb-2" />
           <p className="font-semibold text-slate-400">Not enough session data yet</p>
-          <p className="text-[11px] text-slate-500 mt-1">Complete at least 2 sessions of {selectedExercise} to unlock your high-resolution progression curves.</p>
+          <p className="text-[11px] text-slate-500 mt-1">Complete at least 2 sessions of {selectedExercise} to see progression curves.</p>
         </div>
       );
     }
@@ -89,13 +71,12 @@ export default function AnalyticsView({ activeProfileId }) {
       <div className="w-full overflow-x-auto">
         <svg viewBox={`0 0 ${width} ${height}`} className="w-full h-52 sm:h-60">
           <defs>
-            <linearGradient id={`grad_${key}`} x1="0" y1="0" x2="0" y2="1">
-              <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+            <linearGradient id={`grad_red_${key}`} x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0%" stopColor={color} stopOpacity="0.3" />
               <stop offset="100%" stopColor={color} stopOpacity="0.0" />
             </linearGradient>
           </defs>
 
-          {/* Grid lines */}
           {[0, 0.5, 1].map((r, idx) => {
             const y = height - padding - r * (height - 2 * padding);
             const val = Math.round(minVal + r * range);
@@ -109,13 +90,11 @@ export default function AnalyticsView({ activeProfileId }) {
             );
           })}
 
-          {/* Area fill */}
           <path
             d={`${pathD} L ${points[points.length - 1].x} ${height - padding} L ${points[0].x} ${height - padding} Z`}
-            fill={`url(#grad_${key})`}
+            fill={`url(#grad_red_${key})`}
           />
 
-          {/* Glowing Line */}
           <path
             d={pathD}
             fill="none"
@@ -123,10 +102,9 @@ export default function AnalyticsView({ activeProfileId }) {
             strokeWidth="3.5"
             strokeLinecap="round"
             strokeLinejoin="round"
-            style={{ filter: `drop-shadow(0 4px 10px ${glowColor})` }}
+            style={{ filter: `drop-shadow(0 4px 10px ${color}66)` }}
           />
 
-          {/* Data Points */}
           {points.map((p, i) => (
             <g key={i}>
               <circle cx={p.x} cy={p.y} r="4.5" fill="#05070d" stroke={color} strokeWidth="3" />
@@ -145,25 +123,20 @@ export default function AnalyticsView({ activeProfileId }) {
   return (
     <div className="space-y-6 pb-24 max-w-4xl mx-auto">
       
-      {/* Header & Exercise Selector */}
+      {/* Header & Selector */}
       <div className="pro-card p-6 border-slate-800 flex flex-col sm:flex-row items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2 mb-1">
-            <span className="text-[10px] font-black uppercase px-2 py-0.5 rounded bg-fitrex-lime/10 text-fitrex-lime border border-fitrex-lime/30">
-              PRO ANALYTICS
-            </span>
-          </div>
           <h2 className="text-xl font-black text-white flex items-center gap-2">
-            <LineChart className="w-6 h-6 text-fitrex-lime" /> Performance Progression
+            <LineChart className="w-6 h-6 text-fitrex-red" /> Performance Progression
           </h2>
-          <p className="text-xs text-slate-400">Track maximum load improvements, estimated 1-Rep Max & training volume</p>
+          <p className="text-xs text-slate-400">Track weight improvements and estimated 1-Rep Max curves over time</p>
         </div>
 
         {exerciseNames.length > 0 && (
           <select
             value={selectedExercise}
             onChange={e => setSelectedExercise(e.target.value)}
-            className="input-pro text-xs py-2.5 px-3 min-w-[240px] font-bold text-fitrex-lime bg-slate-900 shadow-sm"
+            className="input-pro text-xs py-2.5 px-3 min-w-[240px] font-bold text-fitrex-red bg-slate-900 shadow-sm"
           >
             {exerciseNames.map(name => (
               <option key={name} value={name}>{name}</option>
@@ -172,167 +145,108 @@ export default function AnalyticsView({ activeProfileId }) {
         )}
       </div>
 
-      {/* Selected Movement Milestone Metric Cards */}
+      {/* Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3.5">
-        
-        {/* 1. All-Time Max Weight */}
-        <div className="pro-card p-5 border-slate-800 flex items-center gap-4 pro-card-glow">
-          <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400 shadow-lg shadow-amber-500/15">
+        <div className="pro-card p-5 border-slate-800 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-fitrex-red/15 border border-fitrex-red/30 flex items-center justify-center text-fitrex-red shadow-glow-red-sm">
             <Trophy className="w-6 h-6" />
           </div>
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Personal Record (PR)</span>
-            <span className="text-2xl font-black text-white mono-num tracking-tight">
+            <span className="text-2xl font-black text-white mono-num">
               {currentPR.maxWeight ? `${currentPR.maxWeight} ${unit}` : '--'}
             </span>
-            <span className="text-[10px] text-amber-400 font-semibold block mt-0.5">Top Heaviest Lift</span>
           </div>
         </div>
 
-        {/* 2. Estimated 1-Rep Max */}
-        <div className="pro-card p-5 border-slate-800 flex items-center gap-4 pro-card-glow">
-          <div className="w-12 h-12 rounded-2xl bg-fitrex-lime/15 border border-fitrex-lime/30 flex items-center justify-center text-fitrex-lime shadow-glow-lime">
+        <div className="pro-card p-5 border-slate-800 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-amber-500/15 border border-amber-500/30 flex items-center justify-center text-amber-400">
             <Zap className="w-6 h-6" />
           </div>
           <div>
-            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Est. 1-Rep Max (1RM)</span>
-            <span className="text-2xl font-black text-white mono-num tracking-tight">
+            <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Est. 1-Rep Max</span>
+            <span className="text-2xl font-black text-white mono-num">
               {currentPR.best1RM ? `${currentPR.best1RM} ${unit}` : '--'}
             </span>
-            <span className="text-[10px] text-fitrex-lime font-semibold block mt-0.5">Epley Formula Model</span>
           </div>
         </div>
 
-        {/* 3. Max Single-Set Volume */}
-        <div className="pro-card p-5 border-slate-800 flex items-center gap-4 pro-card-glow">
-          <div className="w-12 h-12 rounded-2xl bg-fitrex-cyan/15 border border-fitrex-cyan/30 flex items-center justify-center text-fitrex-cyan shadow-glow-cyan">
+        <div className="pro-card p-5 border-slate-800 flex items-center gap-4">
+          <div className="w-12 h-12 rounded-2xl bg-cyan-500/15 border border-cyan-500/30 flex items-center justify-center text-cyan-400">
             <Target className="w-6 h-6" />
           </div>
           <div>
             <span className="text-[11px] font-bold uppercase tracking-wider text-slate-400 block">Peak Set Volume</span>
-            <span className="text-2xl font-black text-white mono-num tracking-tight">
+            <span className="text-2xl font-black text-white mono-num">
               {currentPR.maxVolume ? `${currentPR.maxVolume} ${unit}` : '--'}
             </span>
-            <span className="text-[10px] text-fitrex-cyan font-semibold block mt-0.5">Weight × Reps Output</span>
           </div>
         </div>
-
       </div>
 
-      {/* Main Interactive Chart Section */}
+      {/* Chart */}
       <div className="pro-card p-6 border-slate-800 space-y-4">
-        
-        {/* Metric Switcher Tabs */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-slate-800 pb-3">
-          <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
-            <TrendingUp className="w-4 h-4 text-fitrex-lime" /> {selectedExercise} Curves
+        <div className="flex items-center justify-between border-b border-slate-800 pb-3">
+          <h3 className="text-sm font-black text-white uppercase tracking-wider">
+            {selectedExercise} Progression
           </h3>
 
-          <div className="flex gap-1.5 bg-slate-900/80 p-1 rounded-xl border border-slate-800">
+          <div className="flex gap-1.5 bg-slate-900 p-1 rounded-xl border border-slate-800">
             <button
               onClick={() => setMetricTab('weight')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                metricTab === 'weight' ? 'bg-fitrex-lime text-slate-950 shadow-glow-lime' : 'text-slate-400 hover:text-white'
+              className={`px-3 py-1 rounded-lg text-xs font-bold ${
+                metricTab === 'weight' ? 'bg-fitrex-red text-white shadow-glow-red' : 'text-slate-400'
               }`}
             >
               Max Weight
             </button>
             <button
               onClick={() => setMetricTab('1rm')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                metricTab === '1rm' ? 'bg-fitrex-lime text-slate-950 shadow-glow-lime' : 'text-slate-400 hover:text-white'
+              className={`px-3 py-1 rounded-lg text-xs font-bold ${
+                metricTab === '1rm' ? 'bg-fitrex-red text-white shadow-glow-red' : 'text-slate-400'
               }`}
             >
               Est. 1RM
             </button>
-            <button
-              onClick={() => setMetricTab('volume')}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all ${
-                metricTab === 'volume' ? 'bg-fitrex-lime text-slate-950 shadow-glow-lime' : 'text-slate-400 hover:text-white'
-              }`}
-            >
-              Volume Load
-            </button>
           </div>
         </div>
 
-        {metricTab === 'weight' && renderChart('maxWeight', '#a3e635', 'rgba(163, 230, 53, 0.4)')}
-        {metricTab === '1rm' && renderChart('best1RM', '#06b6d4', 'rgba(6, 182, 212, 0.4)')}
-        {metricTab === 'volume' && renderChart('totalVol', '#a855f7', 'rgba(168, 85, 247, 0.4)')}
+        {metricTab === 'weight' && renderChart('maxWeight', '#ef4444')}
+        {metricTab === '1rm' && renderChart('best1RM', '#f87171')}
       </div>
 
-      {/* Muscle Volume Load Balance */}
-      <div className="pro-card p-6 border-slate-800 space-y-4">
-        <div className="flex items-center justify-between">
-          <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
-            <Layers className="w-4 h-4 text-fitrex-lime" /> Muscle Training Balance
-          </h3>
-          <span className="text-xs text-slate-400">All-time volume distribution</span>
-        </div>
-
-        <div className="space-y-3">
-          {Object.entries(muscleVolume)
-            .sort((a, b) => b[1] - a[1])
-            .slice(0, 6)
-            .map(([muscle, vol]) => {
-              const percent = Math.round((vol / totalMuscleVol) * 100);
-              return (
-                <div key={muscle} className="space-y-1">
-                  <div className="flex items-center justify-between text-xs font-bold">
-                    <span className="text-white capitalize">{muscle}</span>
-                    <span className="text-slate-400 mono-num">{vol.toLocaleString()} {unit} ({percent}%)</span>
-                  </div>
-                  <div className="w-full bg-slate-900 h-2 rounded-full overflow-hidden border border-slate-800">
-                    <div
-                      className="bg-gradient-to-r from-fitrex-lime to-fitrex-cyan h-full rounded-full transition-all duration-500"
-                      style={{ width: `${percent}%` }}
-                    />
-                  </div>
-                </div>
-              );
-            })}
-        </div>
-      </div>
-
-      {/* Personal Records Trophy Hall */}
+      {/* PR Cabinet */}
       <div className="pro-card p-6 border-slate-800 space-y-4">
         <h3 className="text-sm font-black text-white uppercase tracking-wider flex items-center gap-2">
-          <Award className="w-5 h-5 text-amber-400" /> Personal Records (PR) Hall of Fame
+          <Award className="w-5 h-5 text-fitrex-red" /> Personal Records (PR)
         </h3>
 
-        {exerciseNames.length === 0 ? (
-          <p className="text-xs text-slate-500 text-center py-8">
-            Complete sets in your workout logger to establish verified PRs!
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
-            {exerciseNames.map(name => {
-              const record = prs[name];
-              return (
-                <div
-                  key={name}
-                  onClick={() => setSelectedExercise(name)}
-                  className={`p-4 rounded-2xl border cursor-pointer transition-all ${
-                    selectedExercise === name
-                      ? 'bg-slate-850 border-fitrex-lime/50 shadow-glow-lime'
-                      : 'bg-slate-900/50 border-slate-800 hover:border-slate-700'
-                  }`}
-                >
-                  <div className="flex items-center justify-between mb-2">
-                    <h4 className="text-sm font-extrabold text-white truncate max-w-[200px]">{name}</h4>
-                    <span className="text-xs font-black bg-amber-500/15 text-amber-400 border border-amber-500/30 px-2.5 py-0.5 rounded-full mono-num">
-                      {record.maxWeight} {unit}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between text-xs text-slate-400">
-                    <span>Est 1RM: <strong className="text-fitrex-cyan mono-num">{record.best1RM} {unit}</strong></span>
-                    <span>Peak Vol: <strong className="text-fitrex-purple mono-num">{record.maxVolume} {unit}</strong></span>
-                  </div>
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          {exerciseNames.map(name => {
+            const record = prs[name];
+            return (
+              <div
+                key={name}
+                onClick={() => setSelectedExercise(name)}
+                className={`p-3.5 rounded-2xl border cursor-pointer transition-all ${
+                  selectedExercise === name
+                    ? 'bg-slate-850 border-fitrex-red/60 shadow-glow-red-sm'
+                    : 'bg-slate-900/60 border-slate-800 hover:border-slate-700'
+                }`}
+              >
+                <div className="flex items-center justify-between mb-1.5">
+                  <h4 className="text-sm font-black text-white truncate max-w-[200px]">{name}</h4>
+                  <span className="text-xs font-black bg-fitrex-red/15 text-fitrex-red border border-fitrex-red/30 px-2.5 py-0.5 rounded-full mono-num">
+                    {record.maxWeight} {unit}
+                  </span>
                 </div>
-              );
-            })}
-          </div>
-        )}
+                <div className="text-xs text-slate-400">
+                  Est 1RM: <strong className="text-white mono-num">{record.best1RM} {unit}</strong>
+                </div>
+              </div>
+            );
+          })}
+        </div>
       </div>
 
     </div>

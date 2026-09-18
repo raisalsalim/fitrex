@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { Play, Pause, RotateCcw, X, Maximize2, Minimize2, Bell } from 'lucide-react';
+import { Play, Pause, RotateCcw, X, Maximize2, Minimize2 } from 'lucide-react';
 
 export default function RestTimer({
   isOpen,
@@ -21,11 +21,10 @@ export default function RestTimer({
       audioContextRef.current = ctx;
 
       const now = ctx.currentTime;
-      // High-end double chime
       const osc1 = ctx.createOscillator();
       const gain1 = ctx.createGain();
       osc1.type = 'sine';
-      osc1.frequency.setValueAtTime(987.77, now); // B5
+      osc1.frequency.setValueAtTime(987.77, now);
       gain1.gain.setValueAtTime(0.3, now);
       gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.3);
       osc1.connect(gain1);
@@ -36,7 +35,7 @@ export default function RestTimer({
       const osc2 = ctx.createOscillator();
       const gain2 = ctx.createGain();
       osc2.type = 'sine';
-      osc2.frequency.setValueAtTime(1318.51, now + 0.15); // E6
+      osc2.frequency.setValueAtTime(1318.51, now + 0.15);
       gain2.gain.setValueAtTime(0.35, now + 0.15);
       gain2.gain.exponentialRampToValueAtTime(0.001, now + 0.5);
       osc2.connect(gain2);
@@ -47,9 +46,7 @@ export default function RestTimer({
       if (navigator.vibrate) {
         navigator.vibrate([200, 100, 200]);
       }
-    } catch (e) {
-      console.log('Audio chime error:', e);
-    }
+    } catch (e) {}
   };
 
   useEffect(() => {
@@ -102,27 +99,26 @@ export default function RestTimer({
           onClick={() => setIsMinimized(false)}
           className={`flex items-center gap-3 px-4 py-2.5 rounded-full shadow-2xl cursor-pointer border backdrop-blur-xl transition-all hover:scale-105 ${
             isRunning
-              ? 'bg-[#05070d]/95 border-fitrex-lime/60 shadow-glow-lime'
+              ? 'bg-[#05070d]/95 border-fitrex-red/60 shadow-glow-red'
               : 'bg-[#05070d]/95 border-slate-700'
           }`}
         >
-          <div className={`w-3 h-3 rounded-full ${isRunning ? 'bg-fitrex-lime animate-ping' : 'bg-slate-500'}`} />
+          <div className={`w-3 h-3 rounded-full ${isRunning ? 'bg-fitrex-red animate-ping' : 'bg-slate-500'}`} />
           <span className="mono-num text-sm font-black text-white">{formattedTime}</span>
           <Maximize2 className="w-3.5 h-3.5 text-slate-400 hover:text-white" />
         </div>
       ) : (
-        <div className="pro-card p-5 w-80 border-fitrex-lime/40 shadow-2xl relative bg-[#070b14]/95 backdrop-blur-2xl">
-          {/* Top Bar */}
+        <div className="pro-card p-5 w-80 border-fitrex-red/40 shadow-2xl relative bg-[#070b14]/95 backdrop-blur-2xl">
           <div className="flex items-center justify-between mb-3">
-            <span className="text-xs font-black uppercase tracking-wider text-fitrex-lime flex items-center gap-2">
-              <span className="w-2 h-2 rounded-full bg-fitrex-lime animate-ping" />
+            <span className="text-xs font-black uppercase tracking-wider text-fitrex-red flex items-center gap-2">
+              <span className="w-2 h-2 rounded-full bg-fitrex-red animate-ping" />
               Rest Interval
             </span>
             <div className="flex items-center gap-1">
               <button
                 onClick={() => setIsMinimized(true)}
                 className="p-1 text-slate-400 hover:text-white rounded-lg"
-                title="Minimize to Floating Pill"
+                title="Minimize"
               >
                 <Minimize2 className="w-4 h-4" />
               </button>
@@ -136,7 +132,7 @@ export default function RestTimer({
             </div>
           </div>
 
-          {/* Circular Countdown Gauge */}
+          {/* Red Progress Ring */}
           <div className="relative w-44 h-44 mx-auto flex items-center justify-center my-2">
             <svg className="w-full h-full transform -rotate-90" viewBox="0 0 100 100">
               <circle
@@ -152,14 +148,14 @@ export default function RestTimer({
                 cx="50"
                 cy="50"
                 r="45"
-                className="text-fitrex-lime transition-all duration-500 ease-linear"
+                className="text-fitrex-red transition-all duration-500 ease-linear"
                 strokeWidth="7"
                 strokeDasharray="283"
                 strokeDashoffset={strokeDashoffset}
                 strokeLinecap="round"
                 stroke="currentColor"
                 fill="transparent"
-                style={{ filter: 'drop-shadow(0 0 6px rgba(163, 230, 53, 0.5))' }}
+                style={{ filter: 'drop-shadow(0 0 8px rgba(239, 68, 68, 0.6))' }}
               />
             </svg>
             <div className="absolute inset-0 flex flex-col items-center justify-center">
@@ -172,7 +168,7 @@ export default function RestTimer({
             </div>
           </div>
 
-          {/* Steppers & Controls */}
+          {/* Controls */}
           <div className="flex items-center justify-center gap-3 my-4">
             <button
               onClick={() => adjustSeconds(-15)}
@@ -187,7 +183,7 @@ export default function RestTimer({
               className={`p-3.5 rounded-2xl font-black flex items-center justify-center shadow-lg transition-all ${
                 isRunning
                   ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/40'
-                  : 'bg-fitrex-lime hover:bg-lime-300 text-slate-950 shadow-glow-lime'
+                  : 'btn-pro-primary'
               }`}
             >
               {isRunning ? <Pause className="w-5 h-5 fill-current" /> : <Play className="w-5 h-5 fill-current ml-0.5" />}
@@ -210,7 +206,7 @@ export default function RestTimer({
             </button>
           </div>
 
-          {/* Quick Presets */}
+          {/* Presets */}
           <div className="grid grid-cols-4 gap-1.5 pt-2 border-t border-slate-800/80">
             {[45, 60, 90, 120].map((sec) => (
               <button
@@ -218,7 +214,7 @@ export default function RestTimer({
                 onClick={() => setPreset(sec)}
                 className={`py-1.5 rounded-xl text-xs font-black transition-all ${
                   totalDuration === sec
-                    ? 'bg-fitrex-lime text-slate-950 shadow-glow-lime'
+                    ? 'bg-fitrex-red text-white shadow-glow-red'
                     : 'bg-slate-800/50 text-slate-400 hover:text-white'
                 }`}
               >
