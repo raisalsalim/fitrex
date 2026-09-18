@@ -606,14 +606,9 @@ export const DEFAULT_TEMPLATES = [
   {
     id: 'tpl_chest_triceps_cardio',
     name: 'Chest & Triceps Cardio',
-    muscleCategory: 'chest',
+    muscleCategory: 'cardio',
     icon: 'Sparkles',
     exercises: [
-      'Flat Dumbbell Press',
-      'Incline DB Press',
-      'Pec Fly Machine',
-      'Rope Push Down',
-      'Over Head DB Extension (Single Hand)',
       'Pushups (Normal or Knee)'
     ]
   }
@@ -622,6 +617,16 @@ export const DEFAULT_TEMPLATES = [
 export function getWorkoutTemplates() {
   const saved = safeParse('fitrex_workout_templates', null);
   if (saved && Array.isArray(saved) && saved.length > 0) {
+    // Update tpl_chest_triceps_cardio if it still has multiple exercises or wrong category
+    const idx = saved.findIndex(t => t.id === 'tpl_chest_triceps_cardio');
+    if (idx >= 0 && (saved[idx].exercises.length > 1 || saved[idx].muscleCategory !== 'cardio')) {
+      saved[idx] = {
+        ...saved[idx],
+        muscleCategory: 'cardio',
+        exercises: ['Pushups (Normal or Knee)']
+      };
+      safeSet('fitrex_workout_templates', saved);
+    }
     return saved;
   }
   // Default seed

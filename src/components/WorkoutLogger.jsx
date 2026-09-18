@@ -178,13 +178,30 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
   };
 
   // Load an entire template (e.g. Shoulder, Leg, Wings, Chest, Biceps, Triceps, Chest & Triceps Cardio)
+  // PREVENTS DUPLICATES: Checks if exercises are already present in today's workout
   const handleLoadTemplate = (template) => {
     if (!currentWorkout) return;
     const allEx = getAllExercises();
-    const newExercises = [];
+    const existingExercises = currentWorkout.exercises || [];
     const timestamp = Date.now();
 
-    template.exercises.forEach((exName, idx) => {
+    // Prevent duplicate exercises: filter out any exercise that already exists in today's workout
+    const exercisesToAdd = (template.exercises || []).filter(exName => {
+      const targetName = exName.toLowerCase().trim();
+      return !existingExercises.some(e => {
+        const en = e.name.toLowerCase().trim();
+        return en === targetName || (en.includes(targetName) && targetName.length > 5) || (targetName.includes(en) && en.length > 5);
+      });
+    });
+
+    if (exercisesToAdd.length === 0) {
+      alert(`All movements from the "${template.name}" template are already added to today's workout!`);
+      return;
+    }
+
+    const newExercises = [];
+
+    exercisesToAdd.forEach((exName, idx) => {
       // Find matching exercise in 107+ library
       const found = allEx.find(e => 
         e.name.toLowerCase() === exName.toLowerCase() ||
@@ -201,6 +218,23 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
       const defaultWeightUnit = found.defaultUnit === 'blocks' ? 'blocks' : (prev?.weightUnit || unit);
       const initialWeight = prev?.weight || (defaultWeightUnit === 'blocks' ? 8 : 40);
 
+      // Default sets count: 3 sets for Pushups in Chest & Triceps Cardio, 1 set for others
+      const isPushupCardio = exName.toLowerCase().includes('pushup') || template.id === 'tpl_chest_triceps_cardio';
+      const setsCount = isPushupCardio ? 3 : 1;
+
+      const initialSets = Array.from({ length: setsCount }, (_, sIdx) => ({
+        id: `set_${timestamp}_${idx}_${sIdx + 1}`,
+        setNum: sIdx + 1,
+        weight: prev?.weight || (defaultWeightUnit === 'blocks' ? 8 : 0),
+        weightUnit: defaultWeightUnit,
+        reps: prev?.reps || (isPushupCardio ? 15 : 10),
+        durationSeconds: 0,
+        timerRunning: false,
+        timerStartTime: null,
+        completed: false,
+        previous: prev ? `${prev.weight} ${prev.weightUnit || defaultWeightUnit} × ${prev.reps}` : null
+      }));
+
       newExercises.push({
         id: `ex_${timestamp}_${idx}`,
         exerciseId: found.id,
@@ -211,20 +245,7 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
         youtubeUrl: found.youtubeUrl || '',
         photoUrl: found.photoUrl || '',
         cues: found.cues || [],
-        sets: [
-          {
-            id: `set_${timestamp}_${idx}_1`,
-            setNum: 1,
-            weight: initialWeight,
-            weightUnit: defaultWeightUnit,
-            reps: prev?.reps || 10,
-            durationSeconds: 0,
-            timerRunning: false,
-            timerStartTime: null,
-            completed: false,
-            previous: prev ? `${prev.weight} ${prev.weightUnit || defaultWeightUnit} × ${prev.reps}` : null
-          }
-        ]
+        sets: initialSets
       });
     });
 
@@ -243,12 +264,17 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
     setCurrentWorkout(updated);
     saveWorkout(updated, activeProfileId);
 
-    // Auto-Accordion: Expand the first loaded exercise, collapse others
-    const nextExpanded = {};
-    newExercises.forEach((e, i) => {
-      nextExpanded[e.id] = (i === 0);
+    // Auto-Accordion: Expand the first newly loaded exercise, collapse others
+    setExpandedMap(prev => {
+      const nextMap = { ...prev };
+      existingExercises.forEach(e => {
+        nextMap[e.id] = false;
+      });
+      newExercises.forEach((e, i) => {
+        nextMap[e.id] = (i === 0);
+      });
+      return nextMap;
     });
-    setExpandedMap(nextExpanded);
   };
 
   // Toggle individual exercise expand/collapse
