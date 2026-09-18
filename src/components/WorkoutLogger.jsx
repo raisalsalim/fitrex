@@ -609,13 +609,13 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                     >
                       {isExpanded ? (
                         <>
-                          <ChevronUp className="w-4 h-4" />
-                          <span className="hidden sm:inline text-[11px]">Group</span>
+                          <ChevronUp className="w-3.5 h-3.5" />
+                          <span className="text-[11px] font-black">Group</span>
                         </>
                       ) : (
                         <>
-                          <ChevronDown className="w-4 h-4" />
-                          <span className="hidden sm:inline text-[11px]">Expand</span>
+                          <ChevronDown className="w-3.5 h-3.5" />
+                          <span className="text-[11px] font-black">Expand</span>
                         </>
                       )}
                     </button>
@@ -634,29 +634,19 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
 
                 {/* COLLAPSED / GROUPED VIEW: Compact Summary Pill Row */}
                 {!isExpanded ? (
-                  <div 
-                    onClick={() => toggleExpandExercise(exLog.id)}
-                    className="cursor-pointer bg-slate-950/80 hover:bg-slate-900/80 p-2.5 rounded-xl border border-slate-800/80 flex items-center justify-between gap-2 transition-colors select-none"
-                    title="Click to expand sets details"
-                  >
-                    <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar py-0.5">
-                      {(exLog.sets || []).map((s) => (
-                        <span
-                          key={s.id}
-                          className={`text-[10px] font-black px-2 py-0.5 rounded-lg border whitespace-nowrap ${
-                            s.completed
-                              ? 'bg-fitrex-red/15 text-fitrex-red border-fitrex-red/40 shadow-glow-red-sm'
-                              : 'bg-slate-900 text-slate-400 border-slate-800'
-                          }`}
-                        >
-                          S{s.setNum}: {s.weight}{s.weightUnit === 'blocks' ? ' blk' : ' kg'} × {s.reps} {s.completed ? '✓' : ''}
-                        </span>
-                      ))}
-                    </div>
-
-                    <span className="text-[10px] font-bold text-slate-400 shrink-0 flex items-center gap-1">
-                      <ChevronDown className="w-3.5 h-3.5 text-fitrex-red" /> Tap to view sets
-                    </span>
+                  <div className="bg-slate-950/80 p-2.5 rounded-xl border border-slate-800/80 flex items-center gap-1.5 overflow-x-auto no-scrollbar py-1">
+                    {(exLog.sets || []).map((s) => (
+                      <span
+                        key={s.id}
+                        className={`text-[10px] font-black px-2.5 py-1 rounded-lg border whitespace-nowrap ${
+                          s.completed
+                            ? 'bg-fitrex-red/15 text-fitrex-red border-fitrex-red/40 shadow-glow-red-sm'
+                            : 'bg-slate-900 text-slate-400 border-slate-800'
+                        }`}
+                      >
+                        S{s.setNum}: {s.weight}{s.weightUnit === 'blocks' ? ' blk' : ' kg'} × {s.reps} {s.completed ? '✓' : ''}
+                      </span>
+                    ))}
                   </div>
                 ) : (
                   /* EXPANDED VIEW: Detailed Sets Table */
