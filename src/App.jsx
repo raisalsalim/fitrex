@@ -10,7 +10,7 @@ import ProfileSelectorModal from './components/ProfileSelectorModal';
 import SettingsModal from './components/SettingsModal';
 import { 
   getActiveProfileId, isAppLocked, lockSession, unlockSession, 
-  getAuthenticatedProfileId, syncWithGist 
+  getAuthenticatedProfileId, getProfiles, syncWithGist 
 } from './services/storage';
 
 export default function App() {
@@ -118,7 +118,6 @@ export default function App() {
       {/* Security PIN Lock Screen & First-Time Login */}
       <PinLockModal
         isOpen={isLocked || showPinSetup}
-        isFirstTime={getProfiles().length === 0}
         onUnlock={handleUnlockApp}
       />
 
