@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Play, Pause, RotateCcw, Flame, CheckCircle2, Clock, Zap } from 'lucide-react';
+import { Play, Pause, RotateCcw, Flame } from 'lucide-react';
 import { getActiveProfile } from '../services/storage';
 
 export default function WorkoutHero({ currentWorkout, unit = 'kg', activeProfileId, selectedDate }) {
@@ -104,20 +104,6 @@ export default function WorkoutHero({ currentWorkout, unit = 'kg', activeProfile
   };
 
   const exercises = currentWorkout?.exercises || [];
-  let totalSets = 0;
-  let doneSets = 0;
-  let totalVolume = 0;
-
-  exercises.forEach(ex => {
-    (ex.sets || []).forEach(s => {
-      totalSets++;
-      if (s.completed) {
-        doneSets++;
-        totalVolume += (Number(s.weight) || 0) * (Number(s.reps) || 0);
-      }
-    });
-  });
-
   const sessionTitle = activeProfile?.name ? `${activeProfile.name}'s Workout Session` : "Today's Training Session";
 
   return (
@@ -138,8 +124,8 @@ export default function WorkoutHero({ currentWorkout, unit = 'kg', activeProfile
           </h2>
           <p className="text-xs text-slate-400">
             {exercises.length === 0 
-              ? 'Select your target muscles below and tap Add Exercise to begin.'
-              : `${exercises.length} movements · ${doneSets} of ${totalSets} sets completed`}
+              ? 'Select your target muscles or pick a saved template below to begin.'
+              : `${exercises.length} movements active for this session.`}
           </p>
         </div>
 
@@ -160,7 +146,7 @@ export default function WorkoutHero({ currentWorkout, unit = 'kg', activeProfile
             className={`px-4 py-2.5 rounded-xl font-black text-xs flex items-center gap-2 transition-all shadow-lg ${
               timerState.isRunning
                 ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 shadow-amber-500/30'
-                : 'btn-pro-primary'
+                : 'btn-pro-primary shadow-glow-red'
             }`}
           >
             {timerState.isRunning ? <Pause className="w-4 h-4 fill-current" /> : <Play className="w-4 h-4 fill-current ml-0.5" />}
@@ -180,26 +166,6 @@ export default function WorkoutHero({ currentWorkout, unit = 'kg', activeProfile
         </div>
 
       </div>
-
-      {/* Highlights Bar */}
-      {totalSets > 0 && (
-        <div className="grid grid-cols-3 gap-2 pt-4 mt-4 border-t border-slate-800/80 text-center relative z-10">
-          <div className="p-2 rounded-xl bg-slate-900/50 border border-slate-800/60">
-            <span className="text-[10px] text-slate-400 uppercase font-black block">Sets Done</span>
-            <span className="text-base font-black text-white mono-num">{doneSets} / {totalSets}</span>
-          </div>
-          <div className="p-2 rounded-xl bg-slate-900/50 border border-slate-800/60">
-            <span className="text-[10px] text-slate-400 uppercase font-black block">Total Volume</span>
-            <span className="text-base font-black text-fitrex-red mono-num">{totalVolume.toLocaleString()} {unit}</span>
-          </div>
-          <div className="p-2 rounded-xl bg-slate-900/50 border border-slate-800/60">
-            <span className="text-[10px] text-slate-400 uppercase font-black block">Completion</span>
-            <span className="text-base font-black text-white mono-num">
-              {Math.round((doneSets / totalSets) * 100)}%
-            </span>
-          </div>
-        </div>
-      )}
     </div>
   );
 }

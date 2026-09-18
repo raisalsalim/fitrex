@@ -1,16 +1,19 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { 
   Plus, Check, Trash2, Calendar, Play, Pause, Video, Dumbbell, 
-  ChevronLeft, ChevronRight, Search, X, Flame, ChevronDown, ChevronUp, ChevronsUpDown
+  ChevronLeft, ChevronRight, Search, X, Flame, ChevronDown, ChevronUp, ChevronsUpDown,
+  Bookmark, Sparkles
 } from 'lucide-react';
 import confetti from 'canvas-confetti';
 import { MUSCLE_GROUPS, EQUIPMENT_LIST } from '../data/defaultExercises';
 import { 
   getWorkouts, saveWorkout, getPreviousPerformance, 
-  getAllExercises, getSettings, getPersonalRecords, getActiveProfileId 
+  getAllExercises, getSettings, getPersonalRecords, getActiveProfileId,
+  getWorkoutTemplates 
 } from '../services/storage';
 import PostureModal from './PostureModal';
 import WorkoutHero from './WorkoutHero';
+import WorkoutTemplatesModal from './WorkoutTemplatesModal';
 
 export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
   const settings = getSettings();
@@ -25,6 +28,10 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
   const [equipmentFilter, setEquipmentFilter] = useState('all');
   const [pickerSearch, setPickerSearch] = useState('');
   const [personalRecords, setPersonalRecords] = useState({});
+
+  // Templates State
+  const [workoutTemplates, setWorkoutTemplates] = useState([]);
+  const [showTemplatesModal, setShowTemplatesModal] = useState(false);
 
   // Grouping / Accordion state map: { [exerciseId]: boolean }
   const [expandedMap, setExpandedMap] = useState({});
@@ -51,6 +58,7 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
     setCurrentWorkout(todayWorkout);
     setSelectedMuscles(todayWorkout.targetMuscles || ['chest']);
     setPersonalRecords(getPersonalRecords(activeProfileId));
+    setWorkoutTemplates(getWorkoutTemplates());
 
     // Initialize expanded map: default expand only the last exercise
     if (todayWorkout.exercises?.length) {
@@ -167,6 +175,80 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
     });
 
     setShowPicker(false);
+  };
+
+  // Load an entire template (e.g. Shoulder, Leg, Wings, Chest, Biceps, Triceps, Chest & Triceps Cardio)
+  const handleLoadTemplate = (template) => {
+    if (!currentWorkout) return;
+    const allEx = getAllExercises();
+    const newExercises = [];
+    const timestamp = Date.now();
+
+    template.exercises.forEach((exName, idx) => {
+      // Find matching exercise in 107+ library
+      const found = allEx.find(e => 
+        e.name.toLowerCase() === exName.toLowerCase() ||
+        e.name.toLowerCase().includes(exName.toLowerCase()) ||
+        exName.toLowerCase().includes(e.name.toLowerCase())
+      ) || {
+        id: 'ex_gen_' + idx,
+        name: exName,
+        muscle: template.muscleCategory || 'chest',
+        equipment: 'dumbbell'
+      };
+
+      const prev = getPreviousPerformance(found.name, currentWorkout.id, activeProfileId);
+      const defaultWeightUnit = found.defaultUnit === 'blocks' ? 'blocks' : (prev?.weightUnit || unit);
+      const initialWeight = prev?.weight || (defaultWeightUnit === 'blocks' ? 8 : 40);
+
+      newExercises.push({
+        id: `ex_${timestamp}_${idx}`,
+        exerciseId: found.id,
+        name: found.name,
+        muscle: found.muscle || template.muscleCategory || 'chest',
+        equipment: found.equipment || 'dumbbell',
+        weightUnit: defaultWeightUnit,
+        youtubeUrl: found.youtubeUrl || '',
+        photoUrl: found.photoUrl || '',
+        cues: found.cues || [],
+        sets: [
+          {
+            id: `set_${timestamp}_${idx}_1`,
+            setNum: 1,
+            weight: initialWeight,
+            weightUnit: defaultWeightUnit,
+            reps: prev?.reps || 10,
+            durationSeconds: 0,
+            timerRunning: false,
+            timerStartTime: null,
+            completed: false,
+            previous: prev ? `${prev.weight} ${prev.weightUnit || defaultWeightUnit} × ${prev.reps}` : null
+          }
+        ]
+      });
+    });
+
+    const targetMuscles = Array.from(new Set([
+      ...(currentWorkout.targetMuscles || []),
+      template.muscleCategory || 'chest'
+    ]));
+    setSelectedMuscles(targetMuscles);
+
+    const updated = {
+      ...currentWorkout,
+      targetMuscles,
+      exercises: [...(currentWorkout.exercises || []), ...newExercises]
+    };
+
+    setCurrentWorkout(updated);
+    saveWorkout(updated, activeProfileId);
+
+    // Auto-Accordion: Expand the first loaded exercise, collapse others
+    const nextExpanded = {};
+    newExercises.forEach((e, i) => {
+      nextExpanded[e.id] = (i === 0);
+    });
+    setExpandedMap(nextExpanded);
   };
 
   // Toggle individual exercise expand/collapse
@@ -466,12 +548,45 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
         </div>
       </div>
 
-      {/* 4. Logged Exercises Section */}
+      {/* 4. Quick Saved Workout Templates Bar */}
+      <div className="pro-card p-4 sm:p-5 border-slate-800 space-y-3 bg-[#080c16]">
+        <div className="flex items-center justify-between">
+          <span className="text-xs font-black uppercase text-slate-300 flex items-center gap-1.5">
+            <Bookmark className="w-3.5 h-3.5 text-fitrex-red" /> 2. Quick Load Workout Template
+          </span>
+          <button
+            type="button"
+            onClick={() => setShowTemplatesModal(true)}
+            className="text-[11px] font-black text-fitrex-red hover:underline flex items-center gap-1"
+          >
+            Manage / Edit Templates →
+          </button>
+        </div>
+
+        {/* Horizontal Quick Load Buttons */}
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 no-scrollbar scroll-smooth">
+          {workoutTemplates.map(tpl => (
+            <button
+              key={tpl.id}
+              type="button"
+              onClick={() => handleLoadTemplate(tpl)}
+              className="px-3 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 border border-slate-800 hover:border-fitrex-red/50 text-xs font-black text-slate-200 hover:text-white whitespace-nowrap shrink-0 transition-all flex items-center gap-1.5 group shadow-sm"
+              title={`Click to load ${tpl.name} routine into today (${tpl.exercises.length} exercises)`}
+            >
+              <span className="w-2 h-2 rounded-full bg-fitrex-red group-hover:scale-125 transition-transform" />
+              {tpl.name}
+              <span className="text-[10px] text-slate-500 font-semibold mono-num">({tpl.exercises.length})</span>
+            </button>
+          ))}
+        </div>
+      </div>
+
+      {/* 5. Logged Exercises Section */}
       <div className="space-y-4">
         <div className="flex items-center justify-between gap-2 flex-wrap">
           <div className="flex items-center gap-2.5">
             <span className="text-xs font-black uppercase text-slate-300">
-              2. Exercises & Sets ({exercisesList.length})
+              3. Exercises & Sets ({exercisesList.length})
             </span>
 
             {/* Expand All / Collapse All Toggle Button */}
@@ -503,14 +618,22 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
             </div>
             <h4 className="text-sm font-bold text-white">No exercises logged for this day</h4>
             <p className="text-xs text-slate-400 max-w-sm mx-auto">
-              Tap "Add Exercise" above to pick from 100+ movements. Newly added exercises expand automatically!
+              Tap a saved template above (Shoulder, Leg, Wings, Biceps, Chest, Triceps) or tap "Add Exercise" to choose movements.
             </p>
-            <button
-              onClick={() => { setPickerSearch(''); setShowPicker(true); }}
-              className="btn-pro-primary text-xs py-2 px-4 inline-flex items-center gap-1.5 shadow-glow-red"
-            >
-              <Plus className="w-4 h-4" /> Browse 100+ Exercises
-            </button>
+            <div className="flex justify-center gap-2 pt-1">
+              <button
+                onClick={() => setShowTemplatesModal(true)}
+                className="btn-pro-secondary text-xs py-2 px-4 inline-flex items-center gap-1.5"
+              >
+                <Bookmark className="w-3.5 h-3.5 text-fitrex-red" /> View Templates
+              </button>
+              <button
+                onClick={() => { setPickerSearch(''); setShowPicker(true); }}
+                className="btn-pro-primary text-xs py-2 px-4 inline-flex items-center gap-1.5 shadow-glow-red"
+              >
+                <Plus className="w-4 h-4" /> Browse 107+ Exercises
+              </button>
+            </div>
           </div>
         ) : (
           currentWorkout.exercises.map((exLog) => {
@@ -638,7 +761,7 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                     {(exLog.sets || []).map((s) => (
                       <span
                         key={s.id}
-                        className={`text-[10px] font-black px-2.5 py-1 rounded-lg border whitespace-nowrap ${
+                        className={`text-[10px] font-black px-2.5 py-0.5 rounded-lg border whitespace-nowrap ${
                           s.completed
                             ? 'bg-fitrex-red/15 text-fitrex-red border-fitrex-red/40 shadow-glow-red-sm'
                             : 'bg-slate-900 text-slate-400 border-slate-800'
@@ -786,7 +909,7 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
         )}
       </div>
 
-      {/* 5. FIXED EXERCISE PICKER MODAL (Filter bar is strictly sticky and never hidden) */}
+      {/* 6. FIXED EXERCISE PICKER MODAL (Filter bar is strictly sticky and never hidden) */}
       {showPicker && (
         <div className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-3 sm:p-4">
           <div className="w-full max-w-2xl pro-card border-slate-700 max-h-[90vh] flex flex-col shadow-2xl overflow-hidden bg-[#090e1a]">
@@ -813,7 +936,7 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
                 <Search className="w-4 h-4 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
                 <input
                   type="text"
-                  placeholder="Search 100+ exercises (shoulder press, squat, lat pull, hammer curl, pushups)..."
+                  placeholder="Search 107+ exercises (shoulder press, squat, lat pull, hammer curl, pushups)..."
                   value={pickerSearch}
                   onChange={e => setPickerSearch(e.target.value)}
                   className="w-full input-pro pl-10 text-xs py-2.5"
@@ -918,7 +1041,7 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
         </div>
       )}
 
-      {/* 6. Posture Guide Modal */}
+      {/* 7. Posture Guide Modal */}
       <PostureModal
         exercise={selectedExerciseForModal}
         isOpen={!!selectedExerciseForModal}
@@ -926,6 +1049,17 @@ export default function WorkoutLogger({ onTriggerTimer, activeProfileId }) {
         onUpdateExercise={(updated) => {
           setSelectedExerciseForModal(updated);
         }}
+      />
+
+      {/* 8. Workout Templates Manager Modal */}
+      <WorkoutTemplatesModal
+        isOpen={showTemplatesModal}
+        onClose={() => {
+          setShowTemplatesModal(false);
+          setWorkoutTemplates(getWorkoutTemplates());
+        }}
+        onLoadTemplate={handleLoadTemplate}
+        currentDayExercises={currentWorkout?.exercises || []}
       />
 
     </div>

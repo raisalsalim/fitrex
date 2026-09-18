@@ -531,3 +531,137 @@ export function triggerAutoGistSync() {
     syncWithGist().catch(e => console.log('Auto sync error:', e));
   }, 3000);
 }
+
+// ----------------- WORKOUT TEMPLATES -----------------
+export const DEFAULT_TEMPLATES = [
+  {
+    id: 'tpl_shoulder',
+    name: 'Shoulder',
+    muscleCategory: 'shoulders',
+    icon: 'Target',
+    exercises: [
+      'Shoulder Press (Dumbbell Overhead)',
+      'Lateral Rise (Raise)',
+      'Reverse Flys (Rear Delts)',
+      'Shrugs (Dumbbell or Barbell)'
+    ]
+  },
+  {
+    id: 'tpl_leg',
+    name: 'Leg',
+    muscleCategory: 'legs',
+    icon: 'Activity',
+    exercises: [
+      'Normal Squat with Dumbbell (Goblet Squat)',
+      'Leg Extension (Machine)',
+      'Lunges (Walking or Stationary DB)',
+      'Calves Rise (Standing or Seated)'
+    ]
+  },
+  {
+    id: 'tpl_wings',
+    name: 'Wings',
+    muscleCategory: 'wings',
+    icon: 'Compass',
+    exercises: [
+      'Lat Pull Down',
+      'Seated Row (Cable)',
+      'RDL (Romanian Deadlift)',
+      'Barbell Row (Bent-over)'
+    ]
+  },
+  {
+    id: 'tpl_biceps',
+    name: 'Biceps',
+    muscleCategory: 'biceps',
+    icon: 'Flame',
+    exercises: [
+      'Stick Biceps Curl (Straight Bar)',
+      'Alternate Hammer Curl - DB',
+      'Wide Grip Z-Bar Curl'
+    ]
+  },
+  {
+    id: 'tpl_chest',
+    name: 'Chest',
+    muscleCategory: 'chest',
+    icon: 'Shield',
+    exercises: [
+      'Flat Dumbbell Press',
+      'Incline DB Press',
+      'Pec Fly Machine'
+    ]
+  },
+  {
+    id: 'tpl_triceps',
+    name: 'Triceps',
+    muscleCategory: 'triceps',
+    icon: 'Zap',
+    exercises: [
+      'Rope Push Down',
+      'Over Head DB Extension (Single Hand)',
+      'Db Kick Back'
+    ]
+  },
+  {
+    id: 'tpl_chest_triceps_cardio',
+    name: 'Chest & Triceps Cardio',
+    muscleCategory: 'chest',
+    icon: 'Sparkles',
+    exercises: [
+      'Flat Dumbbell Press',
+      'Incline DB Press',
+      'Pec Fly Machine',
+      'Rope Push Down',
+      'Over Head DB Extension (Single Hand)',
+      'Pushups (Normal or Knee)'
+    ]
+  }
+];
+
+export function getWorkoutTemplates() {
+  const saved = safeParse('fitrex_workout_templates', null);
+  if (saved && Array.isArray(saved) && saved.length > 0) {
+    return saved;
+  }
+  // Default seed
+  safeSet('fitrex_workout_templates', DEFAULT_TEMPLATES);
+  return DEFAULT_TEMPLATES;
+}
+
+export function saveWorkoutTemplates(templates) {
+  safeSet('fitrex_workout_templates', templates);
+  triggerAutoGistSync();
+}
+
+export function saveWorkoutTemplate(template) {
+  const templates = getWorkoutTemplates();
+  const existingIdx = templates.findIndex(t => t.id === template.id);
+  let updated;
+  if (existingIdx >= 0) {
+    updated = [...templates];
+    updated[existingIdx] = { ...template, updatedAt: Date.now() };
+  } else {
+    const newTpl = {
+      ...template,
+      id: template.id || 'tpl_' + Date.now(),
+      createdAt: Date.now(),
+      updatedAt: Date.now()
+    };
+    updated = [...templates, newTpl];
+  }
+  saveWorkoutTemplates(updated);
+  return updated;
+}
+
+export function deleteWorkoutTemplate(templateId) {
+  const templates = getWorkoutTemplates();
+  const filtered = templates.filter(t => t.id !== templateId);
+  saveWorkoutTemplates(filtered);
+  return filtered;
+}
+
+export function resetWorkoutTemplatesToDefault() {
+  saveWorkoutTemplates(DEFAULT_TEMPLATES);
+  return DEFAULT_TEMPLATES;
+}
